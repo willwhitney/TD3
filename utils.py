@@ -1,6 +1,8 @@
 import numpy as np
+import copy
+import json
 
-# Code based on: 
+# Code based on:
 # https://github.com/openai/baselines/blob/master/baselines/deepq/replay_buffer.py
 
 # Expects tuples of (state, next_state, action, reward, done)
@@ -21,7 +23,7 @@ class ReplayBuffer(object):
 		ind = np.random.randint(0, len(self.storage), size=batch_size)
 		x, y, u, r, d = [], [], [], [], []
 
-		for i in ind: 
+		for i in ind:
 			X, Y, U, R, D = self.storage[i]
 			x.append(np.array(X, copy=False))
 			y.append(np.array(Y, copy=False))
@@ -30,3 +32,15 @@ class ReplayBuffer(object):
 			d.append(np.array(D, copy=False))
 
 		return np.array(x), np.array(y), np.array(u), np.array(r).reshape(-1, 1), np.array(d).reshape(-1, 1)
+
+def serialize_opt(opt):
+    # import ipdb; ipdb.set_trace()
+    cleaned_opt = copy.deepcopy(vars(opt))
+    return json.dumps(cleaned_opt, indent=4, sort_keys=True)
+
+def write_options(opt, location):
+    with open(location + "/opt.json", 'w') as f:
+        serial_opt = serialize_opt(opt)
+        print(serial_opt)
+        f.write(serial_opt)
+        f.flush()
