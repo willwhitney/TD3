@@ -126,6 +126,7 @@ if __name__ == "__main__":
 		if total_timesteps < args.start_timesteps:
 			action = env.action_space.sample()
 		else:
+			replay_buffer.sample_seq(2, 4)
 			action = policy.select_action(np.array(obs))
 			if args.expl_noise != 0:
 				action = (action + np.random.normal(0, args.expl_noise, size=env.action_space.shape[0])).clip(env.action_space.low, env.action_space.high)
