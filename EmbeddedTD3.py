@@ -19,13 +19,14 @@ class Actor(nn.Module):
         self.l2 = nn.Linear(400, 300)
         self.l3 = nn.Linear(300, action_dim)
 
-        self.max_action = max_action
+        # self.max_action = max_action
 
 
     def forward(self, x):
         x = F.relu(self.l1(x))
         x = F.relu(self.l2(x))
-        x = self.max_action * torch.tanh(self.l3(x))
+        # x = self.max_action * torch.tanh(self.l3(x))
+        x = self.l3(x)
         return x
 
 
@@ -82,14 +83,15 @@ class EmbeddedTD3(object):
         self.critic_optimizer = torch.optim.Adam(self.critic.parameters())
 
         self.max_action = max_action
-        self.pending_plan = []
+        self.pending_plan = torch.Tensor(0, 0, 0).to(device)
 
 
     def select_action(self, state):
-        if len(self.pending_plan) == 0:
+        if self.pending_plan.size(1) == 0:
             state = torch.FloatTensor(state.reshape(1, -1)).to(device)
             e_action = self.actor(state)
             self.pending_plan = self.decoder(e_action)
+        # import ipdb; ipdb.set_trace()
         action = self.pending_plan[:, 0].cpu().data.numpy().flatten()
         self.pending_plan = self.pending_plan[:, 1:]
         return action
@@ -122,14 +124,13 @@ class EmbeddedTD3(object):
             mask = torch.ones(done.size()).to(device)
             for i in range(-2, -self.decoder.traj_len-1, -1):
                 mask[:, i] = mask[:, i+1] * done[:, i]
-            print("Mask:")
-            print(mask)
-            import ipdb; ipdb.set_trace()
+            # print("Mask:")
+            # print(mask.squeeze())
 
             # Estimate the value of the next state by averaging over the different actions
             # the policy might take at the next state
             # i.e. averaging Q(s',a') over the timesteps that the plan (a') could have come from
-            next_state_value = torch.zeros(len(x)).to(device)
+            next_state_value = torch.zeros(state.size(0)).to(device)
             for i in range(self.decoder.traj_len):
                 # next_action = D(pi_e(s_{t+1-i}))[i]
                 next_action = self.plan(next_state[:, -i-1], target=True)[:, i]
@@ -137,19 +138,19 @@ class EmbeddedTD3(object):
                 # Select action according to policy and add clipped noise
                 # I think it's OK that the noise is inside this average;
                 #   it will still bring down the estimated value of very sharp maxima
-                noise = torch.FloatTensor(u).data.normal_(0, policy_noise).to(device)
+                noise = torch.zeros(action[:, -1].size()).data.normal_(0, policy_noise).to(device)
                 noise = noise.clamp(-noise_clip, noise_clip)
                 next_action = (next_action + noise).clamp(-self.max_action, self.max_action)
 
                 # Compute the target Q value
                 next_state_V1_i, next_state_V2_i = self.critic_target(next_state[:, -1], next_action)
-                next_state_V_i = torch.min(next_state_V1, next_state_V2)
+                next_state_V_i = torch.min(next_state_V1_i, next_state_V2_i).squeeze()
                 next_state_value = next_state_value + next_state_V_i * mask[:, -i-1]
 
             # divide by the number of valid plans to get the expected value of the next state
             # (we masked out the invalid plans when totaling next_state_value)
-            next_state_value = next_state_value / mask.sum(dim=1)
-            target_Q = reward + (done * discount * next_state_value).detach()
+            next_state_value = next_state_value / mask.sum(dim=1).squeeze()
+            target_Q = reward[:, -1] + (done[:, -1] * discount * next_state_value).detach()
 
             # Get current Q estimates
             current_Q1, current_Q2 = self.critic(state[:, -1], action[:, -1])
@@ -193,16 +194,17 @@ class EmbeddedTD3(object):
             if it % policy_freq == 0:
                 actor_loss = torch.zeros(1).to(device)
                 for i in range(self.decoder.traj_len):
-                    action = self.plan(state[:, -i-1])[:, i]
-
+                    decoded_action = self.plan(state[:, -i-1])[:, i]
                     # Compute actor loss
-                    loss_i = -self.critic.Q1(state, action)
+                    loss_i = -self.critic.Q1(state[:, -1], decoded_action)
 
                     # mask out the plans based on states that aren't from this episode
-                    loss_i = loss_i * mask[:, -i-1]
-                    actor_loss = actor_loss + loss_i
+                    # and take the mean over the set of viable plans at this timestep
+                    loss_i = (loss_i * mask[:, -i-1]).sum() / mask[:, -i-1].sum()
+                    # import ipdb; ipdb.set_trace()
+                    actor_loss = actor_loss + loss_i.mean()
 
-                actor_loss = actor_loss / mask.sum(dim=1)
+                actor_loss = actor_loss / mask.sum()
                 # Optimize the actor
                 self.actor_optimizer.zero_grad()
                 actor_loss.backward()

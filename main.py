@@ -7,9 +7,18 @@ from baselines import bench
 
 import utils
 import TD3
+import EmbeddedTD3
 import OurDDPG
 import DDPG
 
+
+import sys
+# so it can find the action decoder class
+sys.path.insert(0, '../action-embedding')
+
+# so it can find SparseReacher
+sys.path.insert(0, '../pytorch-a2c-ppo-acktr')
+import envs
 
 # Runs policy for X episodes and returns average reward
 def evaluate_policy(policy, eval_episodes=10):
@@ -48,6 +57,8 @@ if __name__ == "__main__":
 	parser.add_argument("--policy_noise", default=0.2, type=float)		# Noise added to target policy during critic update
 	parser.add_argument("--noise_clip", default=0.5, type=float)		# Range to clip target policy noise
 	parser.add_argument("--policy_freq", default=2, type=int)			# Frequency of delayed policy updates
+
+	parser.add_argument("--decoder", default=None, type=str)			# Frequency of delayed policy updates
 	args = parser.parse_args()
 
 	if args.name is None:
@@ -80,9 +91,16 @@ if __name__ == "__main__":
 	state_dim = env.observation_space.shape[0]
 	action_dim = env.action_space.shape[0]
 	max_action = float(env.action_space.high[0])
+	# import ipdb; ipdb.set_trace()
 
 	# Initialize policy
-	if args.policy_name == "TD3": policy = TD3.TD3(state_dim, action_dim, max_action)
+	if args.decoder is not None:
+		decoder = torch.load(
+                "../action-embedding/results/{}/{}/decoder.pt".format(
+                args.env_name.strip("Super").strip("Sparse"),
+                args.decoder))
+	if args.policy_name == "EmbeddedTD3": policy = EmbeddedTD3.EmbeddedTD3(state_dim, action_dim, max_action, decoder)
+	elif args.policy_name == "TD3": policy = TD3.TD3(state_dim, action_dim, max_action)
 	elif args.policy_name == "OurDDPG": policy = OurDDPG.DDPG(state_dim, action_dim, max_action)
 	elif args.policy_name == "DDPG": policy = DDPG.DDPG(state_dim, action_dim, max_action)
 
@@ -148,4 +166,4 @@ if __name__ == "__main__":
 	# Final evaluation
 	evaluations.append(evaluate_policy(policy))
 	if args.save_models: policy.save("%s" % (args.name), directory="./{}".format(log_dir))
-	np.save("./results/%s" % (args.name), evaluations)
+	# np.save("./results/%s" % (args.name), evaluations)

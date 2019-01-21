@@ -42,25 +42,27 @@ class ReplayBuffer(object):
         return len(self.storage)
 
     def sample_seq(self, batch_size, seq_len):
-        ind = np.random.randint(0, len(self.storage), size=batch_size)
+        ind = np.random.randint(0, len(self.storage) - seq_len, size=batch_size)
         x, y, u, r, d = [], [], [], [], []
 
         for i in ind:
-            transition_sequence = self.storage[i:i+seq_len])
+            transition_sequence = self.storage[i:i+seq_len]
             # take the sequence [(xyurd), (xyurd), (xyurd), (xyurd)]
             # and turn it into [(xxxx), (yyyy), (uuuu), (rrrr), (dddd)]
-            X, Y, U, R, D = list(zip(*transition_sequence)
+            X, Y, U, R, D = list(zip(*transition_sequence))
             x.append(np.array(X, copy=False))
             y.append(np.array(Y, copy=False))
             u.append(np.array(U, copy=False))
             r.append(np.array(R, copy=False))
+            # import ipdb; ipdb.set_trace()
             d.append(np.array(D, copy=False))
 
-        result = (np.array(x),
-                  np.array(y),
-                  np.array(u),
-                  np.array(r).reshape(batch_size, seq_len, 1),
-                  np.array(d).reshape(batch_size, seq_len, 1))
+        # import ipdb; ipdb.set_trace()
+        result = (np.stack(x),
+                  np.stack(y),
+                  np.stack(u),
+                  np.stack(r).reshape(batch_size, seq_len),
+                  np.stack(d).reshape(batch_size, seq_len))
         return result
 
 
