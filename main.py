@@ -59,6 +59,7 @@ if __name__ == "__main__":
 	parser.add_argument("--policy_freq", default=2, type=int)			# Frequency of delayed policy updates
 
 	parser.add_argument("--decoder", default=None, type=str)			# Frequency of delayed policy updates
+	parser.add_argument("--replay_size", default=1e6, type=int)			# Frequency of delayed policy updates
 	args = parser.parse_args()
 
 	if args.name is None:
@@ -104,7 +105,7 @@ if __name__ == "__main__":
 	elif args.policy_name == "OurDDPG": policy = OurDDPG.DDPG(state_dim, action_dim, max_action)
 	elif args.policy_name == "DDPG": policy = DDPG.DDPG(state_dim, action_dim, max_action)
 
-	replay_buffer = utils.ReplayBuffer()
+	replay_buffer = utils.ReplayBuffer(max_size=args.replay_size)
 
 	# Evaluate untrained policy
 	evaluations = [evaluate_policy(policy)]
@@ -131,7 +132,7 @@ if __name__ == "__main__":
 				evaluations.append(evaluate_policy(policy))
 
 				if args.save_models: policy.save(args.name, directory="./pytorch_models")
-				np.save("./results/%s" % (args.name), evaluations)
+				# np.save("./results/%s" % (args.name), evaluations)
 
 			# Reset environment
 			obs = env.reset()
