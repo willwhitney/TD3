@@ -6,6 +6,7 @@ import torch.nn.functional as F
 import utils
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# device = "cpu"
 
 # Implementation of Twin Delayed Deep Deterministic Policy Gradients (TD3)
 # Paper: https://arxiv.org/abs/1802.09477
@@ -85,6 +86,9 @@ class TD3(object):
         state = torch.FloatTensor(state.reshape(1, -1)).to(device)
         return self.actor(state).cpu().data.numpy().flatten()
 
+    def reset(self):
+        pass
+
 
     def train(self, replay_buffer, iterations, batch_size=100, discount=0.99, tau=0.005, policy_noise=0.2, noise_clip=0.5, policy_freq=2):
 
@@ -99,7 +103,7 @@ class TD3(object):
             reward = torch.FloatTensor(r).to(device)
 
             # Select action according to policy and add clipped noise
-            noise = torch.FloatTensor(u).data.normal_(0, policy_noise).to(device)
+            noise = torch.FloatTensor(action.size()).data.normal_(0, policy_noise).to(device)
             noise = noise.clamp(-noise_clip, noise_clip)
             next_action = (self.actor_target(next_state) + noise).clamp(-self.max_action, self.max_action)
 
@@ -121,7 +125,7 @@ class TD3(object):
 
             # Delayed policy updates
             if it % policy_freq == 0:
-
+                # import ipdb; ipdb.set_trace()
                 # Compute actor loss
                 actor_loss = -self.critic.Q1(state, self.actor(state)).mean()
 

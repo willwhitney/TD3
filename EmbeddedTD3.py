@@ -6,28 +6,45 @@ import torch.nn.functional as F
 import utils
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# device = "cpu"
 
 # Implementation of Twin Delayed Deep Deterministic Policy Gradients (TD3)
 # Paper: https://arxiv.org/abs/1802.09477
 
-
 class Actor(nn.Module):
-    def __init__(self, state_dim, action_dim):
+    def __init__(self, state_dim, action_dim, max_action):
         super(Actor, self).__init__()
 
         self.l1 = nn.Linear(state_dim, 400)
         self.l2 = nn.Linear(400, 300)
         self.l3 = nn.Linear(300, action_dim)
 
-        # self.max_action = max_action
+        self.max_action = max_action
 
 
     def forward(self, x):
         x = F.relu(self.l1(x))
         x = F.relu(self.l2(x))
-        # x = self.max_action * torch.tanh(self.l3(x))
-        x = self.l3(x)
+        x = self.max_action * torch.tanh(self.l3(x))
         return x
+
+# class Actor(nn.Module):
+#     def __init__(self, state_dim, action_dim):
+#         super(Actor, self).__init__()
+
+#         self.l1 = nn.Linear(state_dim, 400)
+#         self.l2 = nn.Linear(400, 300)
+#         self.l3 = nn.Linear(300, action_dim)
+
+#         # self.max_action = max_action
+
+
+#     def forward(self, x):
+#         x = F.relu(self.l1(x))
+#         x = F.relu(self.l2(x))
+#         # x = self.max_action * torch.tanh(self.l3(x))
+#         x = self.l3(x)
+#         return x
 
 
 class Critic(nn.Module):
@@ -70,10 +87,10 @@ class Critic(nn.Module):
 class EmbeddedTD3(object):
     def __init__(self, state_dim, action_dim, max_action, decoder):
         self.decoder = decoder
-        self.e_action_dim = decoder.layers[0].in_features
+        self.e_action_dim = decoder.embed_dim
 
-        self.actor = Actor(state_dim, self.e_action_dim).to(device)
-        self.actor_target = Actor(state_dim, self.e_action_dim).to(device)
+        self.actor = Actor(state_dim, self.e_action_dim, max_action).to(device)
+        self.actor_target = Actor(state_dim, self.e_action_dim, max_action).to(device)
         self.actor_target.load_state_dict(self.actor.state_dict())
         self.actor_optimizer = torch.optim.Adam(self.actor.parameters())
 
@@ -103,7 +120,7 @@ class EmbeddedTD3(object):
 
 
     def reset(self):
-        self.pending_plan = []
+        self.pending_plan = torch.Tensor(0, 0, 0).to(device)
 
 
     def train(self, replay_buffer, iterations, batch_size=100, discount=0.99, tau=0.005, policy_noise=0.2, noise_clip=0.5, policy_freq=2):
@@ -124,8 +141,10 @@ class EmbeddedTD3(object):
             mask = torch.ones(done.size()).to(device)
             for i in range(-2, -self.decoder.traj_len-1, -1):
                 mask[:, i] = mask[:, i+1] * done[:, i]
-            # print("Mask:")
-            # print(mask.squeeze())
+            # if mask.sum() < mask.nelement():
+            #     print("Mask")
+            #     print(mask)
+            #     import ipdb; ipdb.set_trace()
 
             # Estimate the value of the next state by averaging over the different actions
             # the policy might take at the next state
@@ -138,7 +157,7 @@ class EmbeddedTD3(object):
                 # Select action according to policy and add clipped noise
                 # I think it's OK that the noise is inside this average;
                 #   it will still bring down the estimated value of very sharp maxima
-                noise = torch.zeros(action[:, -1].size()).data.normal_(0, policy_noise).to(device)
+                noise = torch.zeros(next_action.size()).data.normal_(0, policy_noise).to(device)
                 noise = noise.clamp(-noise_clip, noise_clip)
                 next_action = (next_action + noise).clamp(-self.max_action, self.max_action)
 
@@ -154,37 +173,10 @@ class EmbeddedTD3(object):
 
             # Get current Q estimates
             current_Q1, current_Q2 = self.critic(state[:, -1], action[:, -1])
+            target_Q = target_Q.reshape(-1, 1)
             critic_loss = F.mse_loss(current_Q1, target_Q) + F.mse_loss(current_Q2, target_Q)
+            # import ipdb; ipdb.set_trace()
 
-# --------->  change the update to average over previous states which we could be planning from
-#
-#             critic_loss = torch.zeros(1)
-#             for i in range(self.decoder.traj_len):
-#                 # next_action = D(pi_e(s_{t+1-i}))[i]
-#                 next_action = self.plan(next_state[:, -(i+1)], target=True)[i]
-#
-#                 # Select action according to policy and add clipped noise
-#                 noise = torch.FloatTensor(u).data.normal_(0, policy_noise).to(device)
-#                 noise = noise.clamp(-noise_clip, noise_clip)
-#                 next_action = (next_action + noise).clamp(-self.max_action, self.max_action)
-#
-#                 # Compute the target Q value
-#                 target_Q1, target_Q2 = self.critic_target(next_state[:, -1], next_action)
-#                 target_Q = torch.min(target_Q1, target_Q2)
-#                 target_Q = reward + (done * discount * target_Q).detach()
-#
-#                 # Get current Q estimates
-#                 current_Q1, current_Q2 = self.critic(state[:, -1], action[:, -1])
-#
-#                 # Compute critic loss
-#                 Q1_loss = F.mse_loss(current_Q1, target_Q, reduction='none')
-#                 Q2_loss = F.mse_loss(current_Q2, target_Q, reduction='none')
-#                 step_Q_loss = (Q1_loss + Q2_loss).sum(dim=1) * mask[:, -i-1]
-#                 critic_loss = critic_loss + Q1_loss + Q2_loss
-#
-#             # dividing by mask.sum() gets us to the mean over all *valid* plans in the batch
-#             # (we masked out the invalid plans when totaling the loss)
-#             critic_loss = critic_loss / mask.sum()
             # Optimize the critic
             self.critic_optimizer.zero_grad()
             critic_loss.backward()
@@ -192,6 +184,7 @@ class EmbeddedTD3(object):
 
             # Delayed policy updates
             if it % policy_freq == 0:
+                # import ipdb; ipdb.set_trace()
                 actor_loss = torch.zeros(1).to(device)
                 for i in range(self.decoder.traj_len):
                     decoded_action = self.plan(state[:, -i-1])[:, i]

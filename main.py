@@ -10,11 +10,12 @@ import TD3
 import EmbeddedTD3
 import OurDDPG
 import DDPG
-
+from DummyDecoder import DummyDecoder
 
 import sys
-# so it can find the action decoder class
+# so it can find the action decoder class and LinearPointMass
 sys.path.insert(0, '../action-embedding')
+from pointmass import point_mass
 
 # so it can find SparseReacher
 sys.path.insert(0, '../pytorch-a2c-ppo-acktr')
@@ -25,6 +26,7 @@ def evaluate_policy(policy, eval_episodes=10):
 	avg_reward = 0.
 	for _ in range(eval_episodes):
 		obs = env.reset()
+		policy.reset()
 		done = False
 		while not done:
 			action = policy.select_action(np.array(obs))
@@ -58,8 +60,10 @@ if __name__ == "__main__":
 	parser.add_argument("--noise_clip", default=0.5, type=float)		# Range to clip target policy noise
 	parser.add_argument("--policy_freq", default=2, type=int)			# Frequency of delayed policy updates
 
-	parser.add_argument("--decoder", default=None, type=str)			# Frequency of delayed policy updates
-	parser.add_argument("--replay_size", default=1e6, type=int)			# Frequency of delayed policy updates
+	parser.add_argument("--decoder", default=None, type=str)			# Name of saved decoder
+	parser.add_argument("--dummy_decoder", action="store_true")			# use a dummy decoder that repeats actions
+	parser.add_argument('--dummy_traj_len', type=int, default=1)		# traj_len of dummy decoder
+	parser.add_argument("--replay_size", default=1e6, type=int)			# Size of replay buffer
 	args = parser.parse_args()
 
 	if args.name is None:
@@ -100,6 +104,8 @@ if __name__ == "__main__":
                 "../action-embedding/results/{}/{}/decoder.pt".format(
                 args.env_name.strip("Super").strip("Sparse"),
                 args.decoder))
+	elif args.dummy_decoder:
+		decoder = DummyDecoder(action_dim, args.dummy_traj_len, env.action_space)
 	if args.policy_name == "EmbeddedTD3": policy = EmbeddedTD3.EmbeddedTD3(state_dim, action_dim, max_action, decoder)
 	elif args.policy_name == "TD3": policy = TD3.TD3(state_dim, action_dim, max_action)
 	elif args.policy_name == "OurDDPG": policy = OurDDPG.DDPG(state_dim, action_dim, max_action)
@@ -131,11 +137,12 @@ if __name__ == "__main__":
 				timesteps_since_eval %= args.eval_freq
 				evaluations.append(evaluate_policy(policy))
 
-				if args.save_models: policy.save(args.name, directory="./pytorch_models")
-				# np.save("./results/%s" % (args.name), evaluations)
+                if args.save_models: policy.save("policy", directory=log_dir)
+                np.save("{}/eval.npy".format(log_dir), evaluations)
 
 			# Reset environment
 			obs = env.reset()
+			policy.reset()
 			done = False
 			episode_reward = 0
 			episode_timesteps = 0
@@ -145,7 +152,6 @@ if __name__ == "__main__":
 		if total_timesteps < args.start_timesteps:
 			action = env.action_space.sample()
 		else:
-			replay_buffer.sample_seq(2, 4)
 			action = policy.select_action(np.array(obs))
 			if args.expl_noise != 0:
 				action = (action + np.random.normal(0, args.expl_noise, size=env.action_space.shape[0])).clip(env.action_space.low, env.action_space.high)
@@ -165,6 +171,6 @@ if __name__ == "__main__":
 		timesteps_since_eval += 1
 
 	# Final evaluation
-	evaluations.append(evaluate_policy(policy))
-	if args.save_models: policy.save("%s" % (args.name), directory="./{}".format(log_dir))
-	# np.save("./results/%s" % (args.name), evaluations)
+    evaluations.append(evaluate_policy(policy))
+    if args.save_models: policy.save("policy", directory=log_dir)
+    np.save("{}/eval.npy".format(log_dir), evaluations)
