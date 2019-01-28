@@ -29,7 +29,7 @@ def evaluate_policy(policy, eval_episodes=10):
         policy.reset()
         done = False
         while not done:
-            action = policy.select_action(np.array(obs))
+            action, _, _ = policy.select_action(np.array(obs))
             obs, reward, done, _ = env.step(action)
             avg_reward += reward
 
@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--name", default=None)                         # Job name
-    parser.add_argument("--policy_name", default="TD3")                 # Policy name
+    parser.add_argument("--policy_name", default="EmbeddedTD3")         # Policy name
     parser.add_argument("--env_name", default="HalfCheetah-v1")         # OpenAI gym environment name
     parser.add_argument("--seed", default=0, type=int)                  # Sets Gym, PyTorch and Numpy seeds
     parser.add_argument("--start_timesteps", default=1e4, type=int)     # How many time steps purely random policy is run for
@@ -64,6 +64,7 @@ if __name__ == "__main__":
     parser.add_argument("--dummy_decoder", action="store_true")         # use a dummy decoder that repeats actions
     parser.add_argument('--dummy_traj_len', type=int, default=1)        # traj_len of dummy decoder
     parser.add_argument("--replay_size", default=1e6, type=int)         # Size of replay buffer
+    parser.add_argument("--max_e_action", default=None, type=int)       # Clip the scale of the action embeddings
     args = parser.parse_args()
 
     if args.name is None:
@@ -90,7 +91,7 @@ if __name__ == "__main__":
     # add a Monitor and log the command-line options
     log_dir = "results/{}/".format(args.name)
     os.makedirs(log_dir, exist_ok=True)
-    env = bench.Monitor(env, log_dir)
+    env = bench.Monitor(env, log_dir, allow_early_resets=True)
     utils.write_options(args, log_dir)
 
     state_dim = env.observation_space.shape[0]
@@ -100,16 +101,20 @@ if __name__ == "__main__":
 
     # Initialize policy
     if args.decoder is not None:
+        if 'PointMass' in args.env_name: base_env_name = 'LinearPointMass-v0'
+        else: base_env_name = args.env_name.strip("Super").strip("Sparse")
         decoder = torch.load(
                 "../action-embedding/results/{}/{}/decoder.pt".format(
-                args.env_name.strip("Super").strip("Sparse"),
+                base_env_name,
                 args.decoder))
     elif args.dummy_decoder:
         decoder = DummyDecoder(action_dim, args.dummy_traj_len, env.action_space)
+
+    if args.max_e_action is not None: decoder.max_e_action = min(decoder.max_embedding, args.max_e_action)
     
     policy = EmbeddedTD3.EmbeddedTD3(state_dim, action_dim, max_action, decoder)
 
-    replay_buffer = utils.ReplayBuffer(max_size=args.replay_size)
+    replay_buffer = utils.EmbeddedReplayBuffer(max_size=args.replay_size)
 
     # Evaluate untrained policy
     evaluations = [evaluate_policy(policy)]
@@ -125,10 +130,7 @@ if __name__ == "__main__":
 
             if total_timesteps != 0:
                 print("Total T: %d Episode Num: %d Episode T: %d Reward: %f" % (total_timesteps, episode_num, episode_timesteps, episode_reward))
-                if args.policy_name == "TD3":
-                    policy.train(replay_buffer, episode_timesteps, args.batch_size, args.discount, args.tau, args.policy_noise, args.noise_clip, args.policy_freq)
-                else:
-                    policy.train(replay_buffer, episode_timesteps, args.batch_size, args.discount, args.tau)
+                policy.train(replay_buffer, episode_timesteps, args.batch_size, args.discount, args.tau, args.policy_noise, args.noise_clip, args.policy_freq)
 
             # Evaluate episode
             if timesteps_since_eval >= args.eval_freq:
@@ -150,9 +152,10 @@ if __name__ == "__main__":
         if total_timesteps < args.start_timesteps:
             action = env.action_space.sample()
         else:
-            action = policy.select_action(np.array(obs))
-            if args.expl_noise != 0:
-                action = (action + np.random.normal(0, args.expl_noise, size=env.action_space.shape[0])).clip(env.action_space.low, env.action_space.high)
+            action, e_action, plan_step = policy.select_action(np.array(obs), args.expl_noise)
+            # import ipdb; ipdb.set_trace()
+            # if args.expl_noise != 0:
+            #     action = (action + np.random.normal(0, args.expl_noise, size=env.action_space.shape[0])).clip(env.action_space.low, env.action_space.high)
 
         # Perform action
         new_obs, reward, done, _ = env.step(action)
@@ -160,7 +163,7 @@ if __name__ == "__main__":
         episode_reward += reward
 
         # Store data in replay buffer
-        replay_buffer.add((obs, new_obs, action, reward, done_bool))
+        replay_buffer.add((obs, new_obs, action, e_action, plan_step, reward, done_bool))
 
         obs = new_obs
 

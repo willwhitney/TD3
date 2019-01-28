@@ -63,7 +63,7 @@ class ReplayBuffer(object):
                   np.stack(d).reshape(batch_size, seq_len))
         return result
 
-# Expects tuples of (state, next_state, embedded_plan, plan_step, reward, done)
+# Expects tuples of (state, next_state, action, embedded_plan, plan_step, reward, done)
 class EmbeddedReplayBuffer(object):
     def __init__(self, max_size=1e6):
         self.storage = []
@@ -76,12 +76,13 @@ class EmbeddedReplayBuffer(object):
 
     def sample(self, batch_size):
         ind = np.random.randint(0, len(self.storage), size=batch_size)
-        x, y, e, i, r, d = [], [], [], [], []
+        x, y, u, e, i, r, d = [], [], [], [], [], [], []
 
-        for i in ind:
-            X, Y, E, I, R, D = self.storage[i]
+        for j in ind:
+            X, Y, U, E, I, R, D = self.storage[j]
             x.append(np.array(X, copy=False))
             y.append(np.array(Y, copy=False))
+            u.append(np.array(U, copy=False))
             e.append(np.array(E, copy=False))
             i.append(np.array(I, copy=False))
             r.append(np.array(R, copy=False))
@@ -90,8 +91,9 @@ class EmbeddedReplayBuffer(object):
         # import ipdb; ipdb.set_trace()
         result = (np.array(x),
                   np.array(y),
+                  np.array(u),
                   np.array(e),
-                  np.array(i),
+                  np.array(i).reshape(-1, 1),
                   np.array(r).reshape(-1, 1),
                   np.array(d).reshape(-1, 1))
         return result
@@ -101,15 +103,17 @@ class EmbeddedReplayBuffer(object):
 
     def sample_seq(self, batch_size, seq_len):
         ind = np.random.randint(0, len(self.storage) - seq_len + 1, size=batch_size)
-        x, y, e, i, r, d = [], [], [], [], []
+        x, y, u, e, i, r, d = [], [], [], [], [], [], []
 
-        for i in ind:
-            transition_sequence = self.storage[i:i+seq_len]
+        for j in ind:
+            transition_sequence = self.storage[j:j+seq_len]
             # take the sequence [(xyurd), (xyurd), (xyurd), (xyurd)]
             # and turn it into [(xxxx), (yyyy), (uuuu), (rrrr), (dddd)]
-            X, Y, E, I, R, D = list(zip(*transition_sequence))
+            X, Y, U, E, I, R, D = list(zip(*transition_sequence))
+            # import ipdb; ipdb.set_trace()
             x.append(np.array(X, copy=False))
             y.append(np.array(Y, copy=False))
+            u.append(np.array(U, copy=False))
             e.append(np.array(E, copy=False))
             i.append(np.array(I, copy=False))
             r.append(np.array(R, copy=False))
@@ -118,6 +122,7 @@ class EmbeddedReplayBuffer(object):
         # import ipdb; ipdb.set_trace()
         result = (np.stack(x),
                   np.stack(y),
+                  np.stack(u),
                   np.stack(e),
                   np.stack(i).reshape(batch_size, seq_len),
                   np.stack(r).reshape(batch_size, seq_len),

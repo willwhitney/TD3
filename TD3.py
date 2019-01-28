@@ -111,6 +111,7 @@ class TD3(object):
             target_Q1, target_Q2 = self.critic_target(next_state, next_action)
             target_Q = torch.min(target_Q1, target_Q2)
             target_Q = reward + (done * discount * target_Q).detach()
+            # import ipdb; ipdb.set_trace()
 
             # Get current Q estimates
             current_Q1, current_Q2 = self.critic(state, action)
@@ -125,9 +126,9 @@ class TD3(object):
 
             # Delayed policy updates
             if it % policy_freq == 0:
-                # import ipdb; ipdb.set_trace()
                 # Compute actor loss
                 actor_loss = -self.critic.Q1(state, self.actor(state)).mean()
+                # import ipdb; ipdb.set_trace()
 
                 # Optimize the actor
                 self.actor_optimizer.zero_grad()

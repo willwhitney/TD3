@@ -90,7 +90,7 @@ if __name__ == "__main__":
 	# add a Monitor and log the command-line options
 	log_dir = "results/{}/".format(args.name)
 	os.makedirs(log_dir, exist_ok=True)
-	env = bench.Monitor(env, log_dir)
+	env = bench.Monitor(env, log_dir, allow_early_resets=True)
 	utils.write_options(args, log_dir)
 
 	state_dim = env.observation_space.shape[0]
@@ -101,9 +101,9 @@ if __name__ == "__main__":
 	# Initialize policy
 	if args.decoder is not None:
 		decoder = torch.load(
-                "../action-embedding/results/{}/{}/decoder.pt".format(
-                args.env_name.strip("Super").strip("Sparse"),
-                args.decoder))
+				"../action-embedding/results/{}/{}/decoder.pt".format(
+				args.env_name.strip("Super").strip("Sparse"),
+				args.decoder))
 	elif args.dummy_decoder:
 		decoder = DummyDecoder(action_dim, args.dummy_traj_len, env.action_space)
 	if args.policy_name == "EmbeddedTD3": policy = EmbeddedTD3.EmbeddedTD3(state_dim, action_dim, max_action, decoder)
@@ -137,8 +137,8 @@ if __name__ == "__main__":
 				timesteps_since_eval %= args.eval_freq
 				evaluations.append(evaluate_policy(policy))
 
-                if args.save_models: policy.save("policy", directory=log_dir)
-                np.save("{}/eval.npy".format(log_dir), evaluations)
+				if args.save_models: policy.save("policy", directory=log_dir)
+				np.save("{}/eval.npy".format(log_dir), evaluations)
 
 			# Reset environment
 			obs = env.reset()
@@ -154,6 +154,7 @@ if __name__ == "__main__":
 		else:
 			action = policy.select_action(np.array(obs))
 			if args.expl_noise != 0:
+				# import ipdb; ipdb.set_trace()
 				action = (action + np.random.normal(0, args.expl_noise, size=env.action_space.shape[0])).clip(env.action_space.low, env.action_space.high)
 
 		# Perform action
@@ -171,6 +172,6 @@ if __name__ == "__main__":
 		timesteps_since_eval += 1
 
 	# Final evaluation
-    evaluations.append(evaluate_policy(policy))
-    if args.save_models: policy.save("policy", directory=log_dir)
-    np.save("{}/eval.npy".format(log_dir), evaluations)
+	evaluations.append(evaluate_policy(policy))
+	if args.save_models: policy.save("policy", directory=log_dir)
+	np.save("{}/eval.npy".format(log_dir), evaluations)

@@ -7,6 +7,7 @@ class DummyDecoder:
         self.traj_len = traj_len
         self.action_space = action_space
         self.embed_dim = embed_size
+        self.max_embedding = float(action_space.high[0])
 
     def forward(self, embedding):
         # print("I'm a dummy")
