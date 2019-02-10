@@ -4,6 +4,18 @@ import gym
 import argparse
 import os
 from baselines import bench
+import sys
+
+# print("About to print LD_LIBRARY_PATH", flush=True)
+# print("\nLD_LIBRARY_PATH: ", os.environ['LD_LIBRARY_PATH'], flush=True)
+# print("\nPATH: ", os.environ['PATH'], flush=True)
+# print("\nnvidia-smi: ", os.system('nvidia-smi'), flush=True)
+# print("\nlsb_release: ", os.system('lsb_release -a'), flush=True)
+
+import dm_control2gym
+# print("\nImported dm_control2gym", flush=True)
+# import sys; sys.exit(0)
+
 
 import utils
 import TD3
@@ -24,7 +36,7 @@ import envs
 # Runs policy for X episodes and returns average reward
 def evaluate_policy(policy, eval_episodes=10):
 	avg_reward = 0.
-	for _ in range(eval_episodes):
+	for episode in range(eval_episodes):
 		obs = env.reset()
 		policy.reset()
 		done = False
@@ -33,12 +45,34 @@ def evaluate_policy(policy, eval_episodes=10):
 			obs, reward, done, _ = env.step(action)
 			avg_reward += reward
 
+
 	avg_reward /= eval_episodes
 
 	print("---------------------------------------")
 	print("Evaluation over %d episodes: %f" % (eval_episodes, avg_reward))
 	print("---------------------------------------")
 	return avg_reward
+
+def render_policy(policy, log_dir, total_timesteps, eval_episodes=10):
+	frames = []
+	for episode in range(eval_episodes):
+		obs = env.reset()
+		policy.reset()
+		frames.append(env.render(mode='rgb_array'))
+		done = False
+		while not done:
+			action = policy.select_action(np.array(obs))
+			_, reward, done, _ = env.step(action)
+			frames.append(env.render(mode='rgb_array'))
+			if done and reward > 0:
+				green_frame = frames[0].copy()
+				green_frame.fill(0)
+				green_frame[:, :, 1].fill(255)
+				frames.append(green_frame)
+
+	utils.save_gif('{}/{}.mp4'.format(log_dir, total_timesteps),
+				   [torch.tensor(frame.copy()).float()/255 for frame in frames],
+				   color_last=True)
 
 
 if __name__ == "__main__":
@@ -48,9 +82,9 @@ if __name__ == "__main__":
 	parser.add_argument("--policy_name", default="TD3")					# Policy name
 	parser.add_argument("--env_name", default="HalfCheetah-v1")			# OpenAI gym environment name
 	parser.add_argument("--seed", default=0, type=int)					# Sets Gym, PyTorch and Numpy seeds
-	parser.add_argument("--start_timesteps", default=1e4, type=int)		# How many time steps purely random policy is run for
+	parser.add_argument("--start_timesteps", default=1e4, type=float)	# How many time steps purely random policy is run for
 	parser.add_argument("--eval_freq", default=5e3, type=float)			# How often (time steps) we evaluate
-	parser.add_argument("--max_timesteps", default=1e6, type=float)		# Max time steps to run environment for
+	parser.add_argument("--max_timesteps", default=1e7, type=float)		# Max time steps to run environment for
 	parser.add_argument("--save_models", action="store_true")			# Whether or not models are saved
 	parser.add_argument("--expl_noise", default=0.1, type=float)		# Std of Gaussian exploration noise
 	parser.add_argument("--batch_size", default=100, type=int)			# Batch size for both actor and critic
@@ -64,6 +98,7 @@ if __name__ == "__main__":
 	parser.add_argument("--dummy_decoder", action="store_true")			# use a dummy decoder that repeats actions
 	parser.add_argument('--dummy_traj_len', type=int, default=1)		# traj_len of dummy decoder
 	parser.add_argument("--replay_size", default=1e6, type=int)			# Size of replay buffer
+	parser.add_argument("--render_freq", default=5e3, type=float)		# How often (time steps) we render
 	args = parser.parse_args()
 
 	if args.name is None:
@@ -79,8 +114,13 @@ if __name__ == "__main__":
 	if args.save_models and not os.path.exists("./pytorch_models"):
 		os.makedirs("./pytorch_models")
 
-	env = gym.make(args.env_name)
-	env_max_steps = env._max_episode_steps
+	if args.env_name.startswith('dm'):
+		_, domain, task = args.env_name.split('.')
+		env = dm_control2gym.make(domain_name=domain, task_name=task)
+		env_max_steps = 1000
+	else:
+		env = gym.make(args.env_name)
+		env_max_steps = env._max_episode_steps
 
 	# Set seeds
 	env.seed(args.seed)
@@ -114,10 +154,11 @@ if __name__ == "__main__":
 	replay_buffer = utils.ReplayBuffer(max_size=args.replay_size)
 
 	# Evaluate untrained policy
-	evaluations = [evaluate_policy(policy)]
+	evaluations = [(0, 0, evaluate_policy(policy))]
 
 	total_timesteps = 0
 	timesteps_since_eval = 0
+	timesteps_since_render = 0
 	episode_num = 0
 	done = True
 
@@ -135,10 +176,14 @@ if __name__ == "__main__":
 			# Evaluate episode
 			if timesteps_since_eval >= args.eval_freq:
 				timesteps_since_eval %= args.eval_freq
-				evaluations.append(evaluate_policy(policy))
+				evaluations.append((episode_num, total_timesteps, evaluate_policy(policy)))
 
 				if args.save_models: policy.save("policy", directory=log_dir)
-				np.save("{}/eval.npy".format(log_dir), evaluations)
+				np.save("{}/eval.npy".format(log_dir), np.stack(evaluations))
+
+			if timesteps_since_render >= args.render_freq: 
+				timesteps_since_render %= args.render_freq
+				render_policy(policy, log_dir, total_timesteps)
 
 			# Reset environment
 			obs = env.reset()
@@ -170,8 +215,10 @@ if __name__ == "__main__":
 		episode_timesteps += 1
 		total_timesteps += 1
 		timesteps_since_eval += 1
+		timesteps_since_render += 1
 
 	# Final evaluation
-	evaluations.append(evaluate_policy(policy))
+	evaluations.append((episode_num, total_timesteps, evaluate_policy(policy)))
+	np.save("{}/eval.npy".format(log_dir), np.stack(evaluations))
+	render_policy(policy, log_dir, total_timesteps)
 	if args.save_models: policy.save("policy", directory=log_dir)
-	np.save("{}/eval.npy".format(log_dir), evaluations)
