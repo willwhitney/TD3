@@ -143,7 +143,7 @@ def write_options(opt, location):
         f.write(serial_opt)
         f.flush()
 
-def save_gif(filename, inputs, bounce=False, color_last=False, duration=0.1):
+def save_gif(filename, inputs, bounce=False, color_last=False, duration=0.05):
     images = []
     for tensor in inputs:
         tensor = tensor.cpu()

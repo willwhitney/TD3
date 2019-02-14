@@ -11,62 +11,65 @@ if not os.path.exists("slurm_scripts"):
     os.makedirs("slurm_scripts")
 code_dir = '/private/home/willwhitney/code'
 
-basename = "manipulator"
+# basename = "manipulator"
+# grids = [
+#     # # raw
+#     # {
+#     #     "main_file": ['main'],
+#     #     "policy_name": ['TD3', 'DDPG'],
+#     #     "env_name": ['dm.manipulator.bring_ball'],
+
+#     #     "start_timesteps": [0],
+#     #     "eval_freq": [5e3],
+#     #     "render_freq": [1e10],
+#     #     "max_timesteps": [1e8],
+#     #     "seed": list(range(1, 12)),
+#     # },
+
+#     # learned embedding
+#     {
+#         "main_file": ['main_embedded'],
+#         "env_name": ['dm.manipulator.bring_ball'],
+#         "decoder": [
+#             "raw_prior_traj4_z5_norm1e4",
+#             "raw_prior_traj8_z5_norm1e4",
+#             "raw_prior_traj16_z5_norm1e4",
+#         ],
+
+#         "start_timesteps": [0],
+#         "eval_freq": [5e3],
+#         "render_freq": [1e10],
+#         "max_timesteps": [1e8],
+#         "seed": list(range(8)),
+#     },
+# ]
+
+basename = "Pusher_rerun"
 grids = [
     # raw
     {
         "main_file": ['main'],
-        "policy_name": ['TD3', 'DDPG'],
-        "env_name": ['dm.manipulator.bring_ball'],
+        "env_name": ['Pusher-v2'],
 
         "start_timesteps": [0],
-        "eval_freq": [5e3],
-        "render_freq": [1e10],
+        # "eval_freq": [1e2],
         "seed": list(range(4)),
     },
 
     # learned embedding
     {
         "main_file": ['main_embedded'],
-        "env_name": ['dm.manipulator.bring_ball'],
+        "env_name": ['Pusher-v2'],
         "decoder": [
-            "prior_traj4_z6_kl1e4_lr1e4_norm1e4",
-            "marginal_traj4_z6_kl1e4_lr1e4_norm1e4",
+            "prior_traj4_z7_kl1e4_lr1e4_norm1e4",
+            "marginal_traj4_z7_kl1e4_lr1e4_norm1e4",
         ],
 
         "start_timesteps": [0],
-        "eval_freq": [5e3],
-        "render_freq": [1e10],
+        # "eval_freq": [1e2],
         "seed": list(range(4)),
     },
 ]
-
-# basename = "Pusher_start_prior"
-# grids = [
-#     # raw
-#     # {
-#     #     "main_file": ['main'],
-#     #     "env_name": ['Pusher-v2'],
-
-#     #     "start_timesteps": [1e4],
-#     #     # "eval_freq": [1e2],
-#     #     "seed": list(range(4)),
-#     # },
-
-#     # learned embedding
-#     {
-#         "main_file": ['main_embedded'],
-#         "env_name": ['Pusher-v2'],
-#         "decoder": [
-#             "prior_traj4_z7_kl1e4_lr1e4_norm1e4",
-#             "marginal_traj4_z7_kl1e4_lr1e4_norm1e4",
-#         ],
-
-#         "start_timesteps": [1e4],
-#         # "eval_freq": [1e2],
-#         "seed": list(range(4)),
-#     },
-# ]
 
 
 
@@ -205,9 +208,10 @@ for job in jobs:
         slurmfile.write("#SBATCH --export=ALL\n")
         slurmfile.write("#SBATCH --signal=USR1@600\n")
         # slurmfile.write("#SBATCH --time=0-06\n")
-        slurmfile.write("#SBATCH --time=1-00\n")
+        slurmfile.write("#SBATCH --time=3-00\n")
         # slurmfile.write("#SBATCH -p dev\n")
-        slurmfile.write("#SBATCH -p dev,uninterrupted\n")
+        # slurmfile.write("#SBATCH -p dev,uninterrupted\n")
+        slurmfile.write("#SBATCH -p uninterrupted\n")
         # slurmfile.write("#SBATCH -p priority\n")
         slurmfile.write("#SBATCH -N 1\n")
         slurmfile.write("#SBATCH --mem=32gb\n")

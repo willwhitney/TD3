@@ -8,6 +8,7 @@ import sys
 
 # print("About to print LD_LIBRARY_PATH", flush=True)
 # print("\nLD_LIBRARY_PATH: ", os.environ['LD_LIBRARY_PATH'], flush=True)
+# print("\nLD_PRELOAD: ", os.environ['LD_PRELOAD'], flush=True)
 # print("\nPATH: ", os.environ['PATH'], flush=True)
 # print("\nnvidia-smi: ", os.system('nvidia-smi'), flush=True)
 # print("\nlsb_release: ", os.system('lsb_release -a'), flush=True)
@@ -33,6 +34,12 @@ from pointmass import point_mass
 sys.path.insert(0, '../pytorch-a2c-ppo-acktr')
 import envs
 
+
+# from pyvirtualdisplay import Display
+# display_ = Display(visible=0, size=(550, 500))
+# display_.start()
+
+
 # Runs policy for X episodes and returns average reward
 def evaluate_policy(policy, eval_episodes=10):
 	avg_reward = 0.
@@ -42,6 +49,7 @@ def evaluate_policy(policy, eval_episodes=10):
 		done = False
 		while not done:
 			action = policy.select_action(np.array(obs))
+			# import ipdb; ipdb.set_trace()
 			obs, reward, done, _ = env.step(action)
 			avg_reward += reward
 
@@ -53,7 +61,7 @@ def evaluate_policy(policy, eval_episodes=10):
 	print("---------------------------------------")
 	return avg_reward
 
-def render_policy(policy, log_dir, total_timesteps, eval_episodes=10):
+def render_policy(policy, log_dir, total_timesteps, eval_episodes=5):
 	frames = []
 	for episode in range(eval_episodes):
 		obs = env.reset()
@@ -62,13 +70,13 @@ def render_policy(policy, log_dir, total_timesteps, eval_episodes=10):
 		done = False
 		while not done:
 			action = policy.select_action(np.array(obs))
-			_, reward, done, _ = env.step(action)
+			obs, reward, done, _ = env.step(action)
 			frames.append(env.render(mode='rgb_array'))
-			if done and reward > 0:
-				green_frame = frames[0].copy()
-				green_frame.fill(0)
-				green_frame[:, :, 1].fill(255)
-				frames.append(green_frame)
+			# if done and reward > 0:
+			# 	green_frame = frames[0].copy()
+			# 	green_frame.fill(0)
+			# 	green_frame[:, :, 1].fill(255)
+			# 	frames.append(green_frame)
 
 	utils.save_gif('{}/{}.mp4'.format(log_dir, total_timesteps),
 				   [torch.tensor(frame.copy()).float()/255 for frame in frames],
@@ -85,7 +93,7 @@ if __name__ == "__main__":
 	parser.add_argument("--start_timesteps", default=1e4, type=float)	# How many time steps purely random policy is run for
 	parser.add_argument("--eval_freq", default=5e3, type=float)			# How often (time steps) we evaluate
 	parser.add_argument("--max_timesteps", default=1e7, type=float)		# Max time steps to run environment for
-	parser.add_argument("--save_models", action="store_true")			# Whether or not models are saved
+	parser.add_argument("--no_save_models", action="store_true")		# Whether or not models are saved
 	parser.add_argument("--expl_noise", default=0.1, type=float)		# Std of Gaussian exploration noise
 	parser.add_argument("--batch_size", default=100, type=int)			# Batch size for both actor and critic
 	parser.add_argument("--discount", default=0.99, type=float)			# Discount factor
@@ -100,6 +108,7 @@ if __name__ == "__main__":
 	parser.add_argument("--replay_size", default=1e6, type=int)			# Size of replay buffer
 	parser.add_argument("--render_freq", default=5e3, type=float)		# How often (time steps) we render
 	args = parser.parse_args()
+	args.save_models = not args.no_save_models
 
 	if args.name is None:
 		args.name = "{}_{}_seed{}".format(args.env_name, args.policy_name, args.seed)

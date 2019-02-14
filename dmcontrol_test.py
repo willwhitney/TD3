@@ -6,6 +6,7 @@ from dm_control.suite.wrappers import pixels
 import utils
 
 env = suite.load(domain_name="humanoid", task_name="stand")
+import ipdb; ipdb.set_trace()
 env = pixels.Wrapper(env)
 spec = env.action_spec() 
 time_step = env.reset() 
