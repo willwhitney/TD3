@@ -71,12 +71,10 @@ def render_policy(policy, log_dir, total_timesteps, eval_episodes=5):
 		while not done:
 			action = policy.select_action(np.array(obs))
 			obs, reward, done, _ = env.step(action)
-			frames.append(env.render(mode='rgb_array'))
-			# if done and reward > 0:
-			# 	green_frame = frames[0].copy()
-			# 	green_frame.fill(0)
-			# 	green_frame[:, :, 1].fill(255)
-			# 	frames.append(green_frame)
+			frame = env.render(mode='rgb_array')
+
+			frame[:, :, 1] = (frame[:, :, 1].astype(float) + reward * 100).clip(0, 255)
+			frames.append(frame)
 
 	utils.save_gif('{}/{}.mp4'.format(log_dir, total_timesteps),
 				   [torch.tensor(frame.copy()).float()/255 for frame in frames],
@@ -164,6 +162,7 @@ if __name__ == "__main__":
 
 	# Evaluate untrained policy
 	evaluations = [(0, 0, evaluate_policy(policy))]
+	render_policy(policy, log_dir, 0)
 
 	total_timesteps = 0
 	timesteps_since_eval = 0
@@ -190,7 +189,7 @@ if __name__ == "__main__":
 				if args.save_models: policy.save("policy", directory=log_dir)
 				np.save("{}/eval.npy".format(log_dir), np.stack(evaluations))
 
-			if timesteps_since_render >= args.render_freq: 
+			if timesteps_since_render >= args.render_freq:
 				timesteps_since_render %= args.render_freq
 				render_policy(policy, log_dir, total_timesteps)
 

@@ -43,20 +43,24 @@ def evaluate_policy(policy, eval_episodes=10):
     return avg_reward
 
 
-def render_policy(policy, log_dir, total_timesteps, eval_episodes=10):
-    frames = []
-    for episode in range(eval_episodes):
-        obs = env.reset()
-        policy.reset()
-        frames.append(env.render(mode='rgb_array'))
-        done = False
-        while not done:
-            action, _, _ = policy.select_action(np.array(obs))
-            _, _, done, _ = env.step(action)
-            frames.append(env.render(mode='rgb_array'))
-    utils.save_gif('{}/{}.mp4'.format(log_dir, total_timesteps),
-                   [torch.tensor(frame.copy()).float()/255 for frame in frames],
-                   color_last=True)
+def render_policy(policy, log_dir, total_timesteps, eval_episodes=5):
+	frames = []
+	for episode in range(eval_episodes):
+		obs = env.reset()
+		policy.reset()
+		frames.append(env.render(mode='rgb_array'))
+		done = False
+		while not done:
+			action = policy.select_action(np.array(obs))
+			obs, reward, done, _ = env.step(action)
+			frame = env.render(mode='rgb_array')
+
+			frame[:, :, 1] = (frame[:, :, 1].astype(float) + reward * 100).clip(0, 255)
+			frames.append(frame)
+
+	utils.save_gif('{}/{}.mp4'.format(log_dir, total_timesteps),
+				   [torch.tensor(frame.copy()).float()/255 for frame in frames],
+				   color_last=True)
 
 
 if __name__ == "__main__":
@@ -139,7 +143,7 @@ if __name__ == "__main__":
     if args.max_e_action is not None: decoder.max_embedding = min(decoder.max_embedding, args.max_e_action)
     args.policy_noise = args.policy_noise * decoder.max_embedding
     args.expl_noise = args.expl_noise * decoder.max_embedding
-    
+
     policy = EmbeddedTD3(state_dim, action_dim, max_action, decoder)
     random_policy = RandomEmbeddedPolicy(max_action, decoder)
 
@@ -160,7 +164,7 @@ if __name__ == "__main__":
 
             if total_timesteps != 0:
                 print("Total T: %d Episode Num: %d Episode T: %d Reward: %f" % (total_timesteps, episode_num, episode_timesteps, episode_reward))
-                policy.train(replay_buffer, episode_timesteps, args.batch_size, args.discount, args.tau, 
+                policy.train(replay_buffer, episode_timesteps, args.batch_size, args.discount, args.tau,
                              args.policy_noise, args.noise_clip, args.policy_freq)
 
             # Evaluate episode
@@ -171,7 +175,7 @@ if __name__ == "__main__":
                 if args.save_models: policy.save("policy", directory=log_dir)
                 np.save("{}/eval.npy".format(log_dir), np.stack(evaluations))
 
-            if timesteps_since_render >= args.render_freq: 
+            if timesteps_since_render >= args.render_freq:
                 timesteps_since_render %= args.render_freq
                 render_policy(policy, log_dir, total_timesteps)
 
