@@ -149,7 +149,7 @@ class EmbeddedTD3(object):
 
             # create a mask indicating whether the action at index was from the plan at index 0
             same_plan_mask = torch.zeros(plan_step.size()).to(device)
-            for index in range(batch_size): 
+            for index in range(batch_size):
                 # import ipdb; ipdb.set_trace()
                 same_plan_mask[index][:int(remaining_plan_steps[index])] = 1
 
@@ -167,7 +167,7 @@ class EmbeddedTD3(object):
             current_plan_reward = (discounted_reward * same_plan_mask * same_episode_mask).sum(1, keepdim=True)
 
             # find which state we next replan on
-            # if there are 4 steps left in the plan, that means we replanned 
+            # if there are 4 steps left in the plan, that means we replanned
             #   on the state we got to after the 4th action (action[3])
             # that is, we replan on next_state[3]
             next_plan_state = torch.Tensor(batch_size, next_state.size(2)).to(device)
@@ -179,7 +179,7 @@ class EmbeddedTD3(object):
             # noise = torch.FloatTensor(batch_size, self.e_action_dim).data.normal_(0, policy_noise).to(device)
             # noise = noise.clamp(-noise_clip, noise_clip)
             next_action = (self.actor_target(next_plan_state) + noise).clamp(-self.max_e_action, self.max_e_action)
-            
+
             # make a new done mask that is 0 if the episode ended during the current plan
             done_mask = torch.zeros(batch_size, 1).to(device)
             for index in range(batch_size):
@@ -232,6 +232,11 @@ class EmbeddedTD3(object):
 
 
     def load(self, filename, directory):
-        self.actor.load_state_dict(torch.load('%s/%s_actor.pth' % (directory, filename)))
-        self.critic.load_state_dict(torch.load('%s/%s_critic.pth' % (directory, filename)))
-        self.decoder.load_state_dict(torch.load('%s/%s_decoder.pth' % (directory, filename)))
+        if not torch.cuda.is_available():
+            self.actor.load_state_dict(torch.load('%s/%s_actor.pth' % (directory, filename), map_location='cpu'))
+            self.critic.load_state_dict(torch.load('%s/%s_critic.pth' % (directory, filename), map_location='cpu'))
+            self.decoder.load_state_dict(torch.load('%s/%s_decoder.pth' % (directory, filename), map_location='cpu'))
+        else:
+            self.actor.load_state_dict(torch.load('%s/%s_actor.pth' % (directory, filename)))
+            self.critic.load_state_dict(torch.load('%s/%s_critic.pth' % (directory, filename)))
+            self.decoder.load_state_dict(torch.load('%s/%s_decoder.pth' % (directory, filename)))

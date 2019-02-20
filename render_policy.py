@@ -72,7 +72,7 @@ def render_policy(policy, filename, eval_episodes=5):
             avg_reward += reward
             frame = env.render(mode='rgb_array')
 
-            frame[:, :, 1] = (frame[:, :, 1].astype(float) + reward * 100).clip(0, 255)
+            # frame[:, :, 1] = (frame[:, :, 1].astype(float) + reward * 100).clip(0, 255)
             frames.append(frame)
 
     avg_reward /= eval_episodes
@@ -80,7 +80,7 @@ def render_policy(policy, filename, eval_episodes=5):
     print("Evaluation over %d episodes: %f" % (eval_episodes, avg_reward))
     print("---------------------------------------")
 
-    utils.save_gif('{}/{}.mp4'.format(filename),
+    utils.save_gif('{}.mp4'.format(filename),
                    [torch.tensor(frame.copy()).float()/255 for frame in frames],
                    color_last=True)
 
