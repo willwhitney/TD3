@@ -129,7 +129,12 @@ if __name__ == "__main__":
     max_action = float(env.action_space.high[0])
     # import ipdb; ipdb.set_trace()
 
-    policy = TD3.load('policy', 'results/{}'.format(args.name))
+    if args.policy_name == 'TD3':
+        policy = TD3.load('policy', 'results/{}'.format(args.name))
+    elif args.policy_name == 'EmbeddedTD3':
+        policy = EmbeddedTD3.load('policy', 'results/{}'.format(args.name))
+    else:
+        assert False
 
     # # Initialize policy
     # if args.decoder is not None:
