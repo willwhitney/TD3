@@ -146,7 +146,7 @@ class TD3(object):
     def save(self, filename, directory):
         torch.save(self.actor.state_dict(), '%s/%s_actor.pth' % (directory, filename))
         torch.save(self.critic.state_dict(), '%s/%s_critic.pth' % (directory, filename))
-        # torch.save(self, '%s/%s_all.pth' % (directory, filename))
+        torch.save(self, '%s/%s_all.pth' % (directory, filename))
 
 
     def load(self, filename, directory):
@@ -156,3 +156,9 @@ class TD3(object):
         else:
             self.actor.load_state_dict(torch.load('%s/%s_actor.pth' % (directory, filename)))
             self.critic.load_state_dict(torch.load('%s/%s_critic.pth' % (directory, filename)))
+
+def load(filename, directory):
+    if not torch.cuda.is_available():
+        return torch.load('%s/%s_all.pth' % (directory, filename), map_location='cpu')
+    else:
+        return torch.load('%s/%s_all.pth' % (directory, filename))

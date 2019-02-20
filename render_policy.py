@@ -129,20 +129,22 @@ if __name__ == "__main__":
     max_action = float(env.action_space.high[0])
     # import ipdb; ipdb.set_trace()
 
-    # Initialize policy
-    if args.decoder is not None:
-        decoder = torch.load(
-                "../action-embedding/results/{}/{}/decoder.pt".format(
-                args.env_name.strip("Super").strip("Sparse"),
-                args.decoder))
-    elif args.dummy_decoder:
-        decoder = DummyDecoder(action_dim, args.dummy_traj_len, env.action_space)
-    if args.policy_name == "EmbeddedTD3": policy = EmbeddedTD3.EmbeddedTD3(state_dim, action_dim, max_action, decoder)
-    elif args.policy_name == "TD3": policy = TD3.TD3(state_dim, action_dim, max_action)
-    elif args.policy_name == "OurDDPG": policy = OurDDPG.DDPG(state_dim, action_dim, max_action)
-    elif args.policy_name == "DDPG": policy = DDPG.DDPG(state_dim, action_dim, max_action)
+    policy = TD3.load('policy', 'results/{}'.format(args.name))
+
+    # # Initialize policy
+    # if args.decoder is not None:
+    #     decoder = torch.load(
+    #             "../action-embedding/results/{}/{}/decoder.pt".format(
+    #             args.env_name.strip("Super").strip("Sparse"),
+    #             args.decoder))
+    # elif args.dummy_decoder:
+    #     decoder = DummyDecoder(action_dim, args.dummy_traj_len, env.action_space)
+    # if args.policy_name == "EmbeddedTD3": policy = EmbeddedTD3.EmbeddedTD3(state_dim, action_dim, max_action, decoder)
+    # elif args.policy_name == "TD3": policy = TD3.TD3(state_dim, action_dim, max_action)
+    # elif args.policy_name == "OurDDPG": policy = OurDDPG.DDPG(state_dim, action_dim, max_action)
+    # elif args.policy_name == "DDPG": policy = DDPG.DDPG(state_dim, action_dim, max_action)
 
 
-    policy.load('policy', 'results/{}'.format(args.name))
+    # policy.load('policy', 'results/{}'.format(args.name))
 
     render_policy(policy, args.name)
