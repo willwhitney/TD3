@@ -11,65 +11,76 @@ if not os.path.exists("slurm_scripts"):
     os.makedirs("slurm_scripts")
 code_dir = '/private/home/willwhitney/code'
 
-# basename = "manipulator"
-# grids = [
-#     # # raw
-#     # {
-#     #     "main_file": ['main'],
-#     #     "policy_name": ['TD3', 'DDPG'],
-#     #     "env_name": ['dm.manipulator.bring_ball'],
-
-#     #     "start_timesteps": [0],
-#     #     "eval_freq": [5e3],
-#     #     "render_freq": [1e10],
-#     #     "max_timesteps": [1e8],
-#     #     "seed": list(range(1, 12)),
-#     # },
-
-#     # learned embedding
-#     {
-#         "main_file": ['main_embedded'],
-#         "env_name": ['dm.manipulator.bring_ball'],
-#         "decoder": [
-#             "raw_prior_traj4_z5_norm1e4",
-#             "raw_prior_traj8_z5_norm1e4",
-#             "raw_prior_traj16_z5_norm1e4",
-#         ],
-
-#         "start_timesteps": [0],
-#         "eval_freq": [5e3],
-#         "render_freq": [1e10],
-#         "max_timesteps": [1e8],
-#         "seed": list(range(8)),
-#     },
-# ]
-
-basename = "Pusher_rerun"
+basename = "dm.easy_lownoise"
 grids = [
     # raw
     {
         "main_file": ['main'],
-        "env_name": ['Pusher-v2'],
+        "policy_name": ['TD3'],
+        "env_name": [
+            'dm.manipulator.reach',
+            'dm.manipulator.chase',
+        ],
 
+        "expl_noise": [0.05],
+        "policy_noise": [0.1],
         "start_timesteps": [0],
-        # "eval_freq": [1e2],
-        "seed": list(range(4)),
+        "eval_freq": [1e4],
+        "render_freq": [2e4],
+        "max_timesteps": [1e8],
+        "seed": list(range(8)),
     },
 
     # learned embedding
     {
         "main_file": ['main_embedded'],
-        "env_name": ['Pusher-v2'],
+        "env_name": [
+            'dm.manipulator.reach',
+            'dm.manipulator.chase',
+        ],
         "decoder": [
-            "prior_traj4_z7_kl1e4_lr1e4_norm1e4",
-            "marginal_traj4_z7_kl1e4_lr1e4_norm1e4",
+            "raw_prior_traj4_z5_norm1e4",
+            "raw_prior_traj8_z5_norm1e4",
+            "raw_prior_traj16_z5_norm1e4",
         ],
 
+        "expl_noise": [0.05],
+        "policy_noise": [0.1],
         "start_timesteps": [0],
-        # "eval_freq": [1e2],
-        "seed": list(range(4)),
+        "eval_freq": [1e4],
+        "render_freq": [2e4],
+
+        "max_timesteps": [1e8],
+        "seed": list(range(8)),
     },
 ]
+
+# basename = "Pusher_rerun"
+# grids = [
+#     # raw
+#     {
+#         "main_file": ['main'],
+#         "env_name": ['Pusher-v2'],
+
+#         "start_timesteps": [0],
+#         # "eval_freq": [1e2],
+#         "seed": list(range(4)),
+#     },
+
+#     # learned embedding
+#     {
+#         "main_file": ['main_embedded'],
+#         "env_name": ['Pusher-v2'],
+#         "decoder": [
+#             "prior_traj4_z7_kl1e4_lr1e4_norm1e4",
+#             "marginal_traj4_z7_kl1e4_lr1e4_norm1e4",
+#         ],
+
+#         "start_timesteps": [0],
+#         # "eval_freq": [1e2],
+#         "seed": list(range(4)),
+#     },
+# ]
 
 
 

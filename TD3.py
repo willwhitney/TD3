@@ -146,6 +146,7 @@ class TD3(object):
     def save(self, filename, directory):
         torch.save(self.actor.state_dict(), '%s/%s_actor.pth' % (directory, filename))
         torch.save(self.critic.state_dict(), '%s/%s_critic.pth' % (directory, filename))
+        # torch.save(self, '%s/%s_all.pth' % (directory, filename))
 
 
     def load(self, filename, directory):

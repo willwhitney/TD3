@@ -162,7 +162,7 @@ if __name__ == "__main__":
 
 	# Evaluate untrained policy
 	evaluations = [(0, 0, evaluate_policy(policy))]
-	render_policy(policy, log_dir, 0)
+	# render_policy(policy, log_dir, 0)
 
 	total_timesteps = 0
 	timesteps_since_eval = 0

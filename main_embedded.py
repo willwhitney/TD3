@@ -51,7 +51,7 @@ def render_policy(policy, log_dir, total_timesteps, eval_episodes=5):
 		frames.append(env.render(mode='rgb_array'))
 		done = False
 		while not done:
-			action = policy.select_action(np.array(obs))
+			action, _, _ = policy.select_action(np.array(obs))
 			obs, reward, done, _ = env.step(action)
 			frame = env.render(mode='rgb_array')
 
@@ -131,6 +131,7 @@ if __name__ == "__main__":
     if args.decoder is not None:
         if 'PointMass' in args.env_name: base_env_name = 'LinearPointMass-v0'
         elif 'Reacher' in args.env_name: base_env_name = 'Reacher-v2'
+        elif 'dm.manipulator' in args.env_name: base_env_name = 'dm.manipulator.bring_ball'
         else: base_env_name = args.env_name.strip("Super").strip("Sparse")
         decoder = torch.load(
                 "../action-embedding/results/{}/{}/decoder.pt".format(
