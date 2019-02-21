@@ -6,8 +6,6 @@ import os
 from baselines import bench
 import sys
 
-import dm_control2gym
-
 import utils
 import TD3
 import EmbeddedTD3
@@ -106,6 +104,7 @@ if __name__ == "__main__":
 		os.makedirs("./pytorch_models")
 
 	if args.env_name.startswith('dm'):
+		import dm_control2gym
 		_, domain, task = args.env_name.split('.')
 		env = dm_control2gym.make(domain_name=domain, task_name=task)
 		env_max_steps = 1000
