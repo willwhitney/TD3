@@ -12,8 +12,6 @@ import sys
 # print("\nPATH: ", os.environ['PATH'], flush=True)
 # print("\nnvidia-smi: ", os.system('nvidia-smi'), flush=True)
 # print("\nlsb_release: ", os.system('lsb_release -a'), flush=True)
-
-import dm_control2gym
 # print("\nImported dm_control2gym", flush=True)
 # import sys; sys.exit(0)
 
@@ -31,8 +29,8 @@ sys.path.insert(0, '../action-embedding')
 from pointmass import point_mass
 
 # so it can find SparseReacher
-sys.path.insert(0, '../pytorch-a2c-ppo-acktr')
-import envs
+# sys.path.insert(0, '../pytorch-a2c-ppo-acktr')
+# import envs
 
 
 # from pyvirtualdisplay import Display
@@ -122,6 +120,7 @@ if __name__ == "__main__":
 		os.makedirs("./pytorch_models")
 
 	if args.env_name.startswith('dm'):
+		import dm_control2gym
 		_, domain, task = args.env_name.split('.')
 		env = dm_control2gym.make(domain_name=domain, task_name=task)
 		env_max_steps = 1000

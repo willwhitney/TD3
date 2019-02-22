@@ -4,7 +4,7 @@ import gym
 import argparse
 import os
 from baselines import bench
-import dm_control2gym
+# import dm_control2gym
 
 import utils
 import TD3
@@ -20,8 +20,8 @@ sys.path.insert(0, '../action-embedding')
 from pointmass import point_mass
 
 # so it can find SparseReacher
-sys.path.insert(0, '../pytorch-a2c-ppo-acktr')
-import envs
+# sys.path.insert(0, '../pytorch-a2c-ppo-acktr')
+# import envs
 
 # Runs policy for X episodes and returns average reward
 def evaluate_policy(policy, eval_episodes=10):
@@ -105,6 +105,7 @@ if __name__ == "__main__":
         os.makedirs("./pytorch_models")
 
     if args.env_name.startswith('dm'):
+        import dm_control2gym
         _, domain, task = args.env_name.split('.')
         env = dm_control2gym.make(domain_name=domain, task_name=task)
         env_max_steps = 1000
@@ -131,6 +132,8 @@ if __name__ == "__main__":
     if args.decoder is not None:
         if 'PointMass' in args.env_name: base_env_name = 'LinearPointMass-v0'
         elif 'Reacher' in args.env_name: base_env_name = 'Reacher-v2'
+        elif 'Striker' in args.env_name: base_env_name = 'Pusher-v2'
+        elif 'Thrower' in args.env_name: base_env_name = 'Pusher-v2'
         elif 'dm.manipulator' in args.env_name: base_env_name = 'dm.manipulator.bring_ball'
         else: base_env_name = args.env_name.strip("Super").strip("Sparse")
         decoder = torch.load(
