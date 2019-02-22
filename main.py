@@ -6,16 +6,6 @@ import os
 from baselines import bench
 import sys
 
-# print("About to print LD_LIBRARY_PATH", flush=True)
-# print("\nLD_LIBRARY_PATH: ", os.environ['LD_LIBRARY_PATH'], flush=True)
-# print("\nLD_PRELOAD: ", os.environ['LD_PRELOAD'], flush=True)
-# print("\nPATH: ", os.environ['PATH'], flush=True)
-# print("\nnvidia-smi: ", os.system('nvidia-smi'), flush=True)
-# print("\nlsb_release: ", os.system('lsb_release -a'), flush=True)
-# print("\nImported dm_control2gym", flush=True)
-# import sys; sys.exit(0)
-
-
 import utils
 import TD3
 import EmbeddedTD3
@@ -23,19 +13,9 @@ import OurDDPG
 import DDPG
 from DummyDecoder import DummyDecoder
 
-import sys
 # so it can find the action decoder class and LinearPointMass
 sys.path.insert(0, '../action-embedding')
 from pointmass import point_mass
-
-# so it can find SparseReacher
-# sys.path.insert(0, '../pytorch-a2c-ppo-acktr')
-# import envs
-
-
-# from pyvirtualdisplay import Display
-# display_ = Display(visible=0, size=(550, 500))
-# display_.start()
 
 
 # Runs policy for X episodes and returns average reward
@@ -50,7 +30,6 @@ def evaluate_policy(policy, eval_episodes=10):
 			# import ipdb; ipdb.set_trace()
 			obs, reward, done, _ = env.step(action)
 			avg_reward += reward
-
 
 	avg_reward /= eval_episodes
 
@@ -142,18 +121,9 @@ if __name__ == "__main__":
 	state_dim = env.observation_space.shape[0]
 	action_dim = env.action_space.shape[0]
 	max_action = float(env.action_space.high[0])
-	# import ipdb; ipdb.set_trace()
 
 	# Initialize policy
-	if args.decoder is not None:
-		decoder = torch.load(
-				"../action-embedding/results/{}/{}/decoder.pt".format(
-				args.env_name.strip("Super").strip("Sparse"),
-				args.decoder))
-	elif args.dummy_decoder:
-		decoder = DummyDecoder(action_dim, args.dummy_traj_len, env.action_space)
-	if args.policy_name == "EmbeddedTD3": policy = EmbeddedTD3.EmbeddedTD3(state_dim, action_dim, max_action, decoder)
-	elif args.policy_name == "TD3": policy = TD3.TD3(state_dim, action_dim, max_action)
+	if args.policy_name == "TD3": policy = TD3.TD3(state_dim, action_dim, max_action)
 	elif args.policy_name == "OurDDPG": policy = OurDDPG.DDPG(state_dim, action_dim, max_action)
 	elif args.policy_name == "DDPG": policy = DDPG.DDPG(state_dim, action_dim, max_action)
 
@@ -161,7 +131,6 @@ if __name__ == "__main__":
 
 	# Evaluate untrained policy
 	evaluations = [(0, 0, evaluate_policy(policy))]
-	# render_policy(policy, log_dir, 0)
 
 	total_timesteps = 0
 	timesteps_since_eval = 0
@@ -206,7 +175,6 @@ if __name__ == "__main__":
 		else:
 			action = policy.select_action(np.array(obs))
 			if args.expl_noise != 0:
-				# import ipdb; ipdb.set_trace()
 				action = (action + np.random.normal(0, args.expl_noise, size=env.action_space.shape[0])).clip(env.action_space.low, env.action_space.high)
 
 		# Perform action
