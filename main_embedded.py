@@ -4,7 +4,6 @@ import gym
 import argparse
 import os
 from baselines import bench
-# import dm_control2gym
 
 import utils
 import TD3
@@ -22,7 +21,7 @@ from pointmass import point_mass
 # so it can find SparseReacher
 # sys.path.insert(0, '../pytorch-a2c-ppo-acktr')
 # import envs
-
+# print("imports done")
 # Runs policy for X episodes and returns average reward
 def evaluate_policy(policy, eval_episodes=10):
     avg_reward = 0.
@@ -131,21 +130,24 @@ if __name__ == "__main__":
     # Initialize policy
     if args.decoder is not None:
         if 'PointMass' in args.env_name: base_env_name = 'LinearPointMass-v0'
+        elif 'ReacherVertical' in args.env_name: base_env_name = 'ReacherVertical-v2'
+        elif 'ReacherPush' in args.env_name: base_env_name = 'ReacherVertical-v2'
+        elif 'ReacherSpin' in args.env_name: base_env_name = 'ReacherVertical-v2'
+        elif 'ReacherTest' in args.env_name: base_env_name = 'ReacherTest-v2'
         elif 'Reacher' in args.env_name: base_env_name = 'Reacher-v2'
         elif 'Striker' in args.env_name: base_env_name = 'Pusher-v2'
         elif 'Thrower' in args.env_name: base_env_name = 'Pusher-v2'
         elif 'dm.manipulator' in args.env_name: base_env_name = 'dm.manipulator.bring_ball'
         else: base_env_name = args.env_name.strip("Super").strip("Sparse")
-        decoder = torch.load(
-                "../action-embedding/results/{}/{}/decoder.pt".format(
-                base_env_name,
-                args.decoder))
+        decoder_path = "../action-embedding/results/{}/{}/decoder.pt".format(base_env_name, args.decoder)
+        print("Loading decoder from {}".format(decoder_path))
+        decoder = torch.load(decoder_path)
     elif args.dummy_decoder:
         decoder = DummyDecoder(action_dim, args.dummy_traj_len, env.action_space)
     decoder.max_embedding = float(decoder.max_embedding)
 
     if args.max_e_action is not None: decoder.max_embedding = min(decoder.max_embedding, args.max_e_action)
-    args.policy_noise = args.policy_noise * decoder.max_embedding
+    args.policy_noise = args.policy_noise * decoder.max_embedding / decoder.traj_len
     args.expl_noise = args.expl_noise * decoder.max_embedding
 
     policy = EmbeddedTD3(state_dim, action_dim, max_action, decoder)

@@ -11,6 +11,82 @@ if not os.path.exists("slurm_scripts"):
     os.makedirs("slurm_scripts")
 code_dir = '/private/home/willwhitney/code'
 
+# basename = "SPMish"
+# grids = [
+#     # raw
+#     {
+#         "main_file": ['main'],
+#         "env_name": [
+#             'SparsishPointMass-v0',
+#         ],
+
+#         "start_timesteps": [0],
+#         "max_timesteps": [1e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e10],
+#         "seed": list(range(8)),
+#     },
+
+#     # learned embedding
+#     {
+#         "main_file": ['main_embedded'],
+#         "env_name": [
+#             'SparsishPointMass-v0',
+#         ],
+#         "decoder": [
+#             # "qvel_marg",
+#             # "qvel_margscale",
+#             "qpos_marg2",
+#             "qpos_margscale2",
+#         ],
+
+#         "start_timesteps": [0],
+#         "max_timesteps": [1e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e10],
+#         "seed": list(range(4)),
+#     },
+# ]
+
+# basename = "SPMAgain_noise"
+# grids = [
+#     # raw
+#     # {
+#     #     "main_file": ['main'],
+#     #     "env_name": [
+#     #         'SparsePointMass-v0',
+#     #     ],
+
+#     #     "start_timesteps": [0],
+#     #     "max_timesteps": [1e6],
+#     #     "eval_freq": [1e3],
+#     #     "render_freq": [1e10],
+#     #     "seed": list(range(8)),
+#     # },
+
+#     # learned embedding
+#     {
+#         "main_file": ['main_embedded'],
+#         "env_name": [
+#             'SparsePointMass-v0',
+#         ],
+#         "decoder": [
+#             # "qvel_marg",
+#             # "qvel_margscale",
+#             "qpos_marg2",
+#             "qpos_margscale2",
+#         ],
+
+#         "policy_noise": [0.05, 0.1, 0.2],
+
+#         "start_timesteps": [0],
+#         "max_timesteps": [1e6],
+#         "eval_freq": [1e2],
+#         "render_freq": [1e10],
+#         "seed": list(range(6)),
+#     },
+# ]
+
 # basename = "dm.easy_lownoise"
 # grids = [
 #     # raw
@@ -55,101 +131,115 @@ code_dir = '/private/home/willwhitney/code'
 #     },
 # ]
 
-basename = "Thrower_Striker_transfer_start"
-grids = [
-    # raw
-    {
-        "main_file": ['main'],
-        "env_name": [
-            'Striker-v2',
-            'Thrower-v2',
-        ],
-
-        # "start_timesteps": [0],
-        # "eval_freq": [1e2],
-        "max_timesteps": [1e7],
-        "render_freq": [1e10],
-        "seed": list(range(8)),
-    },
-
-    # learned embedding
-    {
-        "main_file": ['main_embedded'],
-        "env_name": [
-            'Striker-v2',
-            'Thrower-v2',
-        ],
-        "decoder": [
-            "prior_traj4_z7_kl1e4_lr1e4_norm1e4",
-            "marginal_traj4_z7_kl1e4_lr1e4_norm1e4",
-        ],
-
-        # "start_timesteps": [0],
-        # "eval_freq": [1e2],
-        "max_timesteps": [1e7],
-        "render_freq": [1e10],
-        "seed": list(range(8)),
-    },
-]
-
-
-
-# basename = "SR_nostart3_fixedreward"
+# basename = "Thrower_Striker_transfer_start"
 # grids = [
 #     # raw
 #     {
 #         "main_file": ['main'],
-#         "env_name": ['SparseReacher-v2'],
-#         "expl_noise": [0.2, 0.4],
+#         "env_name": [
+#             'Striker-v2',
+#             'Thrower-v2',
+#         ],
 
-#         "start_timesteps": [0],
-#         "eval_freq": [5e3],
+#         "max_timesteps": [1e7],
+#         "render_freq": [1e10],
 #         "seed": list(range(8)),
 #     },
 
-#     # # dummy decoder, 4 steps
+#     # learned embedding
+#     {
+#         "main_file": ['main_embedded'],
+#         "env_name": [
+#             'Striker-v2',
+#             'Thrower-v2',
+#         ],
+#         "decoder": [
+#             "prior_traj4_z7_kl1e4_lr1e4_norm1e4",
+#             "marginal_traj4_z7_kl1e4_lr1e4_norm1e4",
+#         ],
+
+#         "max_timesteps": [1e7],
+#         "render_freq": [1e10],
+#         "seed": list(range(8)),
+#     },
+# ]
+
+# basename = "RFS_nostart_redo_pnoise_scale"
+# grids = [
+#     # raw
 #     # {
-#     #     "main_file": ['main_embedded'],
-#     #     "env_name": ['SparseReacher-v2'],
-#     #     "dummy_decoder": [True],
-#     #     "dummy_traj_len": [4],
-#     #     "expl_noise": [0.05, 0.1, 0.2],
-#     #     "policy_noise": [0.1, 0.2, 0.4],
+#     #     "main_file": ['main'],
+#     #     "env_name": [
+#     #         'ReacherVerticalSparse-v2',
+#     #         'ReacherPushSparse-v2',
+#     #         'ReacherSpinSparse-v2',
+#     #     ],
 
 #     #     "start_timesteps": [0],
-#     #     "eval_freq": [2e3],
-#     #     "seed": list(range(4)),
+#     #     "max_timesteps": [1e6],
+#     #     "render_freq": [1e10],
+#     #     "seed": list(range(8)),
 #     # },
 
 #     # learned embedding
 #     {
 #         "main_file": ['main_embedded'],
-#         "env_name": ['SparseReacher-v2'],
-#         "decoder": [
-#             'prior_traj4_z2',
-#             'marginal_traj4_z2',
-#             # 'rawstate_prior_traj4_z2',
-#             # 'rawstate_marginal_traj4_z2',
-#             # 'qposqvel_prior_traj4_z2',
-#             # 'qposqvel_marginal_traj4_z2',
+#         "env_name": [
+#             'ReacherVerticalSparse-v2',
+#             'ReacherPushSparse-v2',
+#             'ReacherSpinSparse-v2',
 #         ],
-#         "expl_noise": [0.2, 0.4],
-#         "policy_noise": [0.2],
+#         "decoder": [
+#             "qpos_marg_whitemax",
+#             "qpos_margscale_whitemax",
+#         ],
 
 #         "start_timesteps": [0],
-#         "eval_freq": [5e3],
+#         "max_timesteps": [1e6],
+#         "render_freq": [1e10],
 #         "seed": list(range(8)),
 #     },
-#     # {
-#     #     "main_file": ['main_embedded'],
-#     #     "env_name": ['SparsePointMass-v0'],
-#     #     "decoder": ['LPM_traj4'],
-#     #     "max_e_action": [3],
-#     #     "start_timesteps": [0],
-#     #     "seed": list(range(8)),
-#     # },
-    
 # ]
+
+
+basename = "RVS_qvel_white_traj8_z4"
+grids = [
+    # raw
+    # {
+    #     "main_file": ['main'],
+    #     "env_name": [
+    #         'ReacherVerticalSparse-v2',
+    #         'ReacherPushSparse-v2',
+    #         'ReacherSpinSparse-v2',
+    #     ],
+
+    #     "start_timesteps": [0],
+    #     "max_timesteps": [1e6],
+    #     "render_freq": [1e10],
+    #     "seed": list(range(8)),
+    # },
+
+    # learned embedding
+    {
+        "main_file": ['main_embedded'],
+        "env_name": [
+            'ReacherVerticalSparse-v2',
+        ],
+        "decoder": [
+            # "qvel_white",
+            # "qvel_white_z3",
+            # "qvel_white_z4",
+            "qvel_white_traj8_z4",
+        ],
+
+        "start_timesteps": [0],
+        "max_timesteps": [1e6],
+        "eval_freq": [1e3],
+        "render_freq": [5e3],
+        "seed": list(range(4)),
+    },
+]
+
 
 jobs = []
 for grid in grids:
@@ -229,10 +319,10 @@ for job in jobs:
         slurmfile.write("#SBATCH --export=ALL\n")
         slurmfile.write("#SBATCH --signal=USR1@600\n")
         # slurmfile.write("#SBATCH --time=0-06\n")
-        slurmfile.write("#SBATCH --time=2-00\n")
+        slurmfile.write("#SBATCH --time=1-00\n")
         # slurmfile.write("#SBATCH -p dev\n")
-        # slurmfile.write("#SBATCH -p dev,uninterrupted\n")
-        slurmfile.write("#SBATCH -p uninterrupted\n")
+        slurmfile.write("#SBATCH -p uninterrupted,dev\n")
+        # slurmfile.write("#SBATCH -p uninterrupted\n")
         # slurmfile.write("#SBATCH -p priority\n")
         slurmfile.write("#SBATCH -N 1\n")
         slurmfile.write("#SBATCH --mem=32gb\n")

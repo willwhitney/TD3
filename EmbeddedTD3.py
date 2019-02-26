@@ -19,13 +19,16 @@ class Actor(nn.Module):
         self.l2 = nn.Linear(400, 300)
         self.l3 = nn.Linear(300, action_dim)
 
+        # self.max_action = max_action * 2
         self.max_action = max_action
 
 
     def forward(self, x):
         x = F.relu(self.l1(x))
         x = F.relu(self.l2(x))
+        # x = self.max_action * torch.tanh(self.l3(x) / self.max_action)
         x = self.max_action * torch.tanh(self.l3(x))
+        # x = self.max_action * torch.tanh(self.l3(x) / 2)
         return x
 
 
