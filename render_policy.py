@@ -37,6 +37,7 @@ def render_policy(policy, filename, render_mode='rgb_array', eval_episodes=5):
             obs, reward, done, _ = env.step(action)
             avg_reward += reward
             frame = env.render(mode=render_mode)
+            # frame[:, :, 1] = (frame[:, :, 1].astype(float) + reward * 100).clip(0, 255)
 
             frames.append(frame)
             if render_mode == 'human':
