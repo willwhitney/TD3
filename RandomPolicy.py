@@ -17,7 +17,9 @@ class RandomPolicy(object):
         self.action_space = action_space
 
     def select_action(self, state):
-        return self.action_space.sample()
+        action = self.action_space.sample()
+        # action.fill(1)
+        return action
 
     def reset(self):
         pass
