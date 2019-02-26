@@ -129,7 +129,8 @@ if __name__ == "__main__":
 
     # Initialize policy
     if args.decoder is not None:
-        if 'PointMass' in args.env_name: base_env_name = 'LinearPointMass-v0'
+        if 'SparsishPointMass' in args.env_name: base_env_name = 'SparsishPointMass-v0'
+        elif 'PointMass' in args.env_name: base_env_name = 'LinearPointMass-v0'
         elif 'ReacherVertical' in args.env_name: base_env_name = 'ReacherVertical-v2'
         elif 'ReacherPush' in args.env_name: base_env_name = 'ReacherVertical-v2'
         elif 'ReacherSpin' in args.env_name: base_env_name = 'ReacherVertical-v2'
