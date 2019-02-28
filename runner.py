@@ -346,19 +346,58 @@ code_dir = '/private/home/willwhitney/code'
     # },
 # ]
 
-# basename = "RV_white"
+basename = "RV_white_repro_part2"
+grids = [
+    # raw
+    {
+        "main_file": ['main'],
+        "env_name": [
+            'ReacherVertical-v2',
+        ],
+
+        "start_timesteps": [0],
+        "max_timesteps": [1e6],
+        "eval_freq": [1e2],
+        "render_freq": [1e10],
+        "seed": list(range(8, 16)),
+    },
+
+
+    # learned embedding
+    {
+        "main_file": ['main_embedded'],
+        "env_name": [
+            'ReacherVertical-v2',
+        ],
+        "decoder": [
+            "white_qvel",
+            "white_qvel_take2",
+        ],
+
+        # "policy_noise": [0.3, 0.2, 0.1],
+        # "expl_noise": [0.2, 0.1, 0.05],
+        "start_timesteps": [0],
+        "max_timesteps": [1e6],
+        "eval_freq": [1e2],
+        "render_freq": [1e10],
+        "seed": list(range(8, 16)),
+    },
+]
+
+# basename = "RF_white_refix"
 # grids = [
 #     # raw
 #     {
 #         "main_file": ['main'],
 #         "env_name": [
-#             'ReacherVertical-v2',
+#             'ReacherPush-v2',
+#             'ReacherSpin-v2',
 #         ],
 
 #         "start_timesteps": [0],
 #         "max_timesteps": [1e6],
 #         "eval_freq": [1e2],
-#         "render_freq": [1e10],
+#         "render_freq": [1e4],
 #         "seed": list(range(8)),
 #     },
 
@@ -367,7 +406,8 @@ code_dir = '/private/home/willwhitney/code'
 #     {
 #         "main_file": ['main_embedded'],
 #         "env_name": [
-#             'ReacherVertical-v2',
+#             'ReacherPush-v2',
+#             'ReacherSpin-v2',
 #         ],
 #         "decoder": [
 #             "white_qvel",
@@ -379,50 +419,10 @@ code_dir = '/private/home/willwhitney/code'
 #         "start_timesteps": [0],
 #         "max_timesteps": [1e6],
 #         "eval_freq": [1e2],
-#         "render_freq": [1e10],
+#         "render_freq": [1e4],
 #         "seed": list(range(8)),
 #     },
 # ]
-
-basename = "RF_white_refix"
-grids = [
-    # raw
-    {
-        "main_file": ['main'],
-        "env_name": [
-            'ReacherPush-v2',
-            'ReacherSpin-v2',
-        ],
-
-        "start_timesteps": [0],
-        "max_timesteps": [1e6],
-        "eval_freq": [1e2],
-        "render_freq": [1e4],
-        "seed": list(range(8)),
-    },
-
-
-    # learned embedding
-    {
-        "main_file": ['main_embedded'],
-        "env_name": [
-            'ReacherPush-v2',
-            'ReacherSpin-v2',
-        ],
-        "decoder": [
-            "white_qvel",
-            "white_qpos",
-        ],
-
-        # "policy_noise": [0.3, 0.2, 0.1],
-        # "expl_noise": [0.2, 0.1, 0.05],
-        "start_timesteps": [0],
-        "max_timesteps": [1e6],
-        "eval_freq": [1e2],
-        "render_freq": [1e4],
-        "seed": list(range(8)),
-    },
-]
 
 # basename = "VanillaReacher_decoderwhite_qvel_traj8"
 # grids = [

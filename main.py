@@ -17,6 +17,7 @@ from DummyDecoder import DummyDecoder
 sys.path.insert(0, '../action-embedding')
 from pointmass import point_mass
 
+import reacher_family
 
 # Runs policy for X episodes and returns average reward
 def evaluate_policy(policy, eval_episodes=10):
