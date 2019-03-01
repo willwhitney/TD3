@@ -3,6 +3,7 @@ from gym.envs.registration import registry, register, make, spec
 from reacher_family.reacher_push import ReacherPushEnv, ReacherPushSparseEnv
 from reacher_family.reacher_vertical import ReacherVerticalEnv, ReacherVerticalSparseEnv
 from reacher_family.reacher_spin import ReacherSpinEnv, ReacherSpinSparseEnv
+from reacher_family.reacher_turn import ReacherTurnEnv
 from reacher_family.reacher_test import ReacherTestEnv, ReacherTestSparseEnv
 
 
@@ -37,6 +38,13 @@ register(
 register(
     id='ReacherSpin-v2',
     entry_point='reacher_family:ReacherSpinEnv',
+    max_episode_steps=100,
+    # reward_threshold=-3.75,
+)
+
+register(
+    id='ReacherTurn-v2',
+    entry_point='reacher_family:ReacherTurnEnv',
     max_episode_steps=100,
     # reward_threshold=-3.75,
 )

@@ -20,6 +20,7 @@ import sys
 sys.path.insert(0, '../action-embedding')
 from pointmass import point_mass
 
+import reacher_family
 
 def render_policy(policy, filename, render_mode='rgb_array', eval_episodes=5):
     frames = []
@@ -37,7 +38,7 @@ def render_policy(policy, filename, render_mode='rgb_array', eval_episodes=5):
             obs, reward, done, _ = env.step(action)
             avg_reward += reward
             frame = env.render(mode=render_mode)
-            # frame[:, :, 1] = (frame[:, :, 1].astype(float) + reward * 100).clip(0, 255)
+            frame[:, :, 1] = (frame[:, :, 1].astype(float) + reward * 100).clip(0, 255)
 
             frames.append(frame)
             if render_mode == 'human':
@@ -90,6 +91,8 @@ if __name__ == "__main__":
         policy = EmbeddedTD3.load('policy', 'results/{}'.format(args.name))
     elif args.policy_name == 'random':
         policy = RandomPolicy.RandomPolicy(env.action_space)
+    elif args.policy_name == 'constant':
+        policy = RandomPolicy.ConstantPolicy(env.action_space)
     else:
         assert False
 
