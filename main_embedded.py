@@ -18,6 +18,8 @@ import sys
 sys.path.insert(0, '../action-embedding')
 from pointmass import point_mass
 
+import reacher_family
+
 # so it can find SparseReacher
 # sys.path.insert(0, '../pytorch-a2c-ppo-acktr')
 # import envs
