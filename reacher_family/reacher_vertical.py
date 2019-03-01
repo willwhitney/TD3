@@ -11,7 +11,7 @@ class ReacherVerticalEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     def step(self, a):
         vec = self.get_body_com("fingertip")-self.get_body_com("target")
         reward_dist = - np.linalg.norm(vec)
-        reward_ctrl = - 0.1 * np.square(a).sum()
+        reward_ctrl = - np.square(a).sum()
         reward = reward_dist + reward_ctrl
         self.do_simulation(a, self.frame_skip)
         ob = self._get_obs()
@@ -22,17 +22,20 @@ class ReacherVerticalEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         self.viewer.cam.trackbodyid = 0
 
     def reset_model(self):
-        qpos = self.np_random.uniform(low=-np.pi, high=np.pi, size=self.model.nq)
-        while True:
-            self.goal = self.np_random.uniform(low=-.2, high=.2, size=2)
-            if np.linalg.norm(self.goal) < 2:
+        for _ in range(1000):
+            qpos = self.np_random.uniform(low=-np.pi, high=np.pi, size=self.model.nq)
+            while True:
+                self.goal = self.np_random.uniform(low=-.2, high=.2, size=2)
+                if np.linalg.norm(self.goal) < 2:
+                    break
+
+            self.model.body_pos[-1, -3] = self.goal[0]
+            self.model.body_pos[-1, -1] = self.goal[1] + 0.2
+            qvel = self.init_qvel + self.np_random.uniform(low=-.005, high=.005, size=self.model.nv)
+            self.set_state(qpos, qvel)
+
+            if self.sim.data.ncon == 0:
                 break
-
-
-        self.model.body_pos[-1, -3] = self.goal[0]
-        self.model.body_pos[-1, -1] = self.goal[1] + 0.2
-        qvel = self.init_qvel + self.np_random.uniform(low=-.005, high=.005, size=self.model.nv)
-        self.set_state(qpos, qvel)
         return self._get_obs()
 
     def _get_obs(self):
