@@ -28,8 +28,8 @@ class RandomEmbeddedPolicy(object):
     def select_action(self, state):
         if self.pending_plan.size(1) == 0:
             e_action = torch.Tensor(1, self.e_action_dim).to(device)
-            e_action.normal_(0, 1)
-            # e_action.uniform_(-self.max_e_action, self.max_e_action)
+            # e_action.normal_(0, 1)
+            e_action.uniform_(-self.max_e_action.item(), self.max_e_action.item())
 
             self.pending_plan = self.decoder(e_action)
             self.current_e_action = e_action

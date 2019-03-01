@@ -23,3 +23,15 @@ class RandomPolicy(object):
 
     def reset(self):
         pass
+
+class ConstantPolicy(object):
+    def __init__(self, action_space):
+        self.action_space = action_space
+
+    def select_action(self, state):
+        action = self.action_space.sample()
+        action.fill(1)
+        return action
+
+    def reset(self):
+        pass

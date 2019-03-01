@@ -90,6 +90,8 @@ if __name__ == "__main__":
         policy = EmbeddedTD3.load('policy', 'results/{}'.format(args.name))
     elif args.policy_name == 'random':
         policy = RandomPolicy.RandomPolicy(env.action_space)
+    elif args.policy_name == 'constant':
+        policy = RandomPolicy.ConstantPolicy(env.action_space)
     else:
         assert False
 
