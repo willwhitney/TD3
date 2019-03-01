@@ -136,6 +136,7 @@ if __name__ == "__main__":
         elif 'ReacherVertical' in args.env_name: base_env_name = 'ReacherVertical-v2'
         elif 'ReacherPush' in args.env_name: base_env_name = 'ReacherVertical-v2'
         elif 'ReacherSpin' in args.env_name: base_env_name = 'ReacherVertical-v2'
+        elif 'ReacherTurn' in args.env_name: base_env_name = 'ReacherVertical-v2'
         elif 'ReacherTest' in args.env_name: base_env_name = 'ReacherTest-v2'
         elif 'Reacher' in args.env_name: base_env_name = 'Reacher-v2'
         elif 'Striker' in args.env_name: base_env_name = 'Pusher-v2'

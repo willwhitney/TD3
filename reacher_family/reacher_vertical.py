@@ -30,7 +30,7 @@ class ReacherVerticalEnv(mujoco_env.MujocoEnv, utils.EzPickle):
                     break
 
             self.model.body_pos[-1, -3] = self.goal[0]
-            self.model.body_pos[-1, -1] = self.goal[1] + 0.2
+            self.model.body_pos[-1, -1] = self.goal[1] + 0.25
             qvel = self.init_qvel + self.np_random.uniform(low=-.005, high=.005, size=self.model.nv)
             self.set_state(qpos, qvel)
 

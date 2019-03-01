@@ -12,7 +12,7 @@ class ReacherTurnEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     def step(self, a):
         # import ipdb; ipdb.set_trace()
         vec = self.sim.data.site_xpos[0] - self.get_body_com("target")
-        reward_dist = - np.linalg.norm(vec)
+        reward_dist = - 10 * np.linalg.norm(vec)
         reward_ctrl = - 0.5 * np.square(a).sum()
         reward = reward_dist + reward_ctrl
         self.do_simulation(a, self.frame_skip)

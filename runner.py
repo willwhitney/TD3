@@ -440,21 +440,23 @@ code_dir = '/private/home/willwhitney/code'
 #     },
 # ]
 
-basename = "RFnew"
+basename = "RFnew3"
 grids = [
     # raw
-    # {
-    #     "main_file": ['main'],
-    #     "env_name": [
-    #         'ReacherVertical-v2',
-    #     ],
+    {
+        "main_file": ['main'],
+        "env_name": [
+            'ReacherVertical-v2',
+            'ReacherPush-v2',
+            'ReacherTurn-v2',
+        ],
 
-    #     "start_timesteps": [0],
-    #     "max_timesteps": [1e6],
-    #     "eval_freq": [1e2],
-    #     "render_freq": [1e4],
-    #     "seed": list(range(8)),
-    # },
+        "start_timesteps": [0],
+        "max_timesteps": [1e7],
+        "eval_freq": [1e2],
+        "render_freq": [1e4],
+        "seed": list(range(8)),
+    },
 
 
     # learned embedding
@@ -462,34 +464,18 @@ grids = [
         "main_file": ['main_embedded'],
         "env_name": [
             'ReacherVertical-v2',
+            'ReacherPush-v2',
+            'ReacherTurn-v2',
         ],
         "decoder": [
             "nocollide_step001_gear200_white_qvel",
             # "nocollide_white_qvel",
         ],
 
-        "policy_noise": [0.4, 0.2, 0.1],
+        # "policy_noise": [0.4, 0.2, 0.1],
         # "expl_noise": [0.2, 0.1, 0.05],
         "start_timesteps": [0],
-        "max_timesteps": [1e6],
-        "eval_freq": [1e2],
-        "render_freq": [1e4],
-        "seed": list(range(8)),
-    },
-    {
-        "main_file": ['main_embedded'],
-        "env_name": [
-            'ReacherVertical-v2',
-        ],
-        "decoder": [
-            "nocollide_step001_gear200_white_qvel",
-            # "nocollide_white_qvel",
-        ],
-
-        # "policy_noise": [0.3, 0.2, 0.1],
-        "expl_noise": [0.2, 0.1, 0.05],
-        "start_timesteps": [0],
-        "max_timesteps": [1e6],
+        "max_timesteps": [1e7],
         "eval_freq": [1e2],
         "render_freq": [1e4],
         "seed": list(range(8)),
@@ -654,8 +640,8 @@ for job in jobs:
         slurmfile.write("#SBATCH --error=slurm_logs/" + jobname + ".err\n")
         slurmfile.write("#SBATCH --export=ALL\n")
         slurmfile.write("#SBATCH --signal=USR1@600\n")
-        slurmfile.write("#SBATCH --time=0-02\n")
-        # slurmfile.write("#SBATCH --time=1-00\n")
+        # slurmfile.write("#SBATCH --time=0-02\n")
+        slurmfile.write("#SBATCH --time=1-00\n")
         # slurmfile.write("#SBATCH -p dev\n")
         # slurmfile.write("#SBATCH -p uninterrupted,dev\n")
         # slurmfile.write("#SBATCH -p uninterrupted\n")
