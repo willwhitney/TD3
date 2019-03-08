@@ -58,9 +58,11 @@ def render_exploration(env, policy, filename, eval_episodes=10):
     print("---------------------------------------")
 
     data = pd.DataFrame(visited, columns=['episode', 'x', 'y'])
-    chart = alt.Chart(data).mark_circle().encode(
-        x='x', y='y', color='episode:N',
-    ).interactive().properties(width=400, height=300)
+    chart = alt.Chart(data).mark_circle(clip=True).encode(
+        x=alt.X('x', scale=alt.Scale(domain=[-0.16, 0.16], nice=False)),
+        y=alt.Y('y', scale=alt.Scale(domain=[-0.16, 0.16], nice=False)),
+        color='episode:N',
+    ).interactive().properties(width=400, height=400)
     chart.save("{}.html".format(filename))
 
 
