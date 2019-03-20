@@ -27,7 +27,7 @@ sys.path.insert(0, '../action-embedding')
 
 import reacher_family
 
-def render_exploration(env, policy, filename, eval_episodes=10, max_steps=1000):
+def render_exploration(env, policy, filename, eval_episodes=10, max_steps=1000, query_dim=0):
     avg_reward = 0.
     uenv = env.unwrapped
     start_obs = env.reset()
@@ -54,7 +54,7 @@ def render_exploration(env, policy, filename, eval_episodes=10, max_steps=1000):
             obs, reward, done, _ = env.step(action)
             avg_reward += reward
             if done: break
-        visited.append([episode, *(uenv.sim.data.qpos[:2] - start_state[0][:2])])
+        visited.append([episode, (uenv.sim.data.qpos[query_dim] - start_state[0][query_dim])])
 
     avg_reward /= eval_episodes
     print("---------------------------------------")
@@ -73,7 +73,9 @@ def render_exploration(env, policy, filename, eval_episodes=10, max_steps=1000):
     data = pd.DataFrame(visited, columns=['episode', 'x'])
     hist = alt.Chart(data).mark_bar().encode(
         x=alt.X('x', bin=alt.Bin(maxbins=100)),
-        y='count()'
+        y=alt.Y('count()')
+        # x=alt.X('x', bin=alt.Bin(step=2), scale=alt.Scale(domain=[-60, 60])),
+        # y=alt.Y('count()', scale=alt.Scale(domain=[0, 110]))
     ).interactive().properties(width=400, height=400)
     hist.save("{}_hist.html".format(filename))
 
@@ -110,7 +112,8 @@ if __name__ == "__main__":
     parser.add_argument("--env_name", default="HalfCheetah-v1")         # OpenAI gym environment name
     parser.add_argument("--seed", default=0, type=int)                  # Sets Gym, PyTorch and Numpy seeds
     parser.add_argument("--episodes", default=10, type=int)             # how many trials to run
-    parser.add_argument("--max_steps", default=1000, type=int)          # how many trials to run
+    parser.add_argument("--max_steps", default=1000, type=int)          # how many steps to run each episode for
+    parser.add_argument("--query_dim", default=0, type=int)             # which dimension to histogram
 
     parser.add_argument("--decoder", default=None, type=str)            # Name of saved decoder
     parser.add_argument("--dummy_decoder", action="store_true")         # use a dummy decoder that repeats actions
@@ -153,4 +156,5 @@ if __name__ == "__main__":
         assert False
 
     render_exploration(env, policy, "{}_{}".format(args.env_name, args.name),
-                       eval_episodes=args.episodes, max_steps=args.max_steps)
+                       eval_episodes=args.episodes, max_steps=args.max_steps,
+                       query_dim=args.query_dim)
