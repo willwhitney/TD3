@@ -14,10 +14,12 @@ import RandomPolicy
 import OurDDPG
 import DDPG
 from DummyDecoder import DummyDecoder
+from RandomPolicy import RandomPolicy, ConstantPolicy
+from RandomEmbeddedPolicy import RandomEmbeddedPolicy
 
 import sys
 # so it can find the action decoder class and LinearPointMass
-sys.path.insert(0, '../action-embedding')
+# sys.path.insert(0, '../action-embedding')
 from pointmass import point_mass
 
 import reacher_family
@@ -31,7 +33,8 @@ def render_policy(policy, filename, render_mode='rgb_array', eval_episodes=5):
         frames.append(env.render(mode=render_mode))
         done = False
         while not done:
-            if isinstance(policy, EmbeddedTD3.EmbeddedTD3):
+            if any([isinstance(policy, EmbeddedTD3.EmbeddedTD3),
+                    isinstance(policy, RandomEmbeddedPolicy)]):
                 action, _, _ = policy.select_action(np.array(obs))
             else:
                 action = policy.select_action(np.array(obs))
@@ -90,7 +93,14 @@ if __name__ == "__main__":
     elif args.policy_name == 'EmbeddedTD3':
         policy = EmbeddedTD3.load('policy', 'results/{}'.format(args.name))
     elif args.policy_name == 'random':
-        policy = RandomPolicy.RandomPolicy(env.action_space)
+        if args.decoder:
+            decoder = load_decoder(args.env_name, args.decoder)
+            policy = RandomEmbeddedPolicy(1, decoder, 4)
+        elif args.dummy_decoder:
+            decoder = DummyDecoder(action_dim, args.dummy_traj_len, env.action_space)
+            policy = RandomEmbeddedPolicy(1, decoder, 1)
+        else:
+            policy = RandomPolicy(env.action_space)
     elif args.policy_name == 'constant':
         policy = RandomPolicy.ConstantPolicy(env.action_space)
     else:

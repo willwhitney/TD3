@@ -34,13 +34,14 @@ def render_exploration(env, policy, filename, eval_episodes=10, max_steps=1000):
 
     # this is only sufficient since I don't care about the goal/target
     start_state = [uenv.sim.data.qpos.copy(), uenv.sim.data.qvel.copy()]
+    print("Start state: ", start_state)
 
     visited = []
     for episode in range(eval_episodes):
         env.reset()
         uenv.set_state(*start_state)
         obs = start_obs
-        visited.append([episode, *(uenv.sim.data.qpos[:2] - start_state[0][:2])])
+        # visited.append([episode, *(uenv.sim.data.qpos[:2] - start_state[0][:2])])
         policy.reset()
         done = False
         for _ in range(max_steps):
@@ -49,23 +50,36 @@ def render_exploration(env, policy, filename, eval_episodes=10, max_steps=1000):
                 action, _, _ = policy.select_action(np.array(obs))
             else:
                 action = policy.select_action(np.array(obs))
+            # if episode == 0: print(action)
             obs, reward, done, _ = env.step(action)
-            visited.append([episode, *(uenv.sim.data.qpos[:2] - start_state[0][:2])])
             avg_reward += reward
             if done: break
+        visited.append([episode, *(uenv.sim.data.qpos[:2] - start_state[0][:2])])
 
     avg_reward /= eval_episodes
     print("---------------------------------------")
     print("Evaluation over %d episodes: %f" % (eval_episodes, avg_reward))
     print("---------------------------------------")
 
-    data = pd.DataFrame(visited, columns=['episode', 'x', 'y'])
-    chart = alt.Chart(data).mark_circle(clip=True).encode(
-        x=alt.X('x', scale=alt.Scale(domain=[-0.16, 0.16], nice=False)),
-        y=alt.Y('y', scale=alt.Scale(domain=[-0.16, 0.16], nice=False)),
-        color='episode:N',
+    # data = pd.DataFrame(visited, columns=['episode', 'x', 'y'])
+    # chart = alt.Chart(data).mark_circle(clip=True).encode(
+    #     x=alt.X('x', scale=alt.Scale(domain=[-0.16, 0.16], nice=False)),
+    #     y=alt.Y('y', scale=alt.Scale(domain=[-0.16, 0.16], nice=False)),
+    #     color='episode:N',
+    # ).interactive().properties(width=400, height=400)
+    # chart.save("{}.html".format(filename))
+
+    # import ipdb; ipdb.set_trace()
+    data = pd.DataFrame(visited, columns=['episode', 'x'])
+    hist = alt.Chart(data).mark_bar().encode(
+        x=alt.X('x', bin=alt.Bin(maxbins=100)),
+        y='count()'
     ).interactive().properties(width=400, height=400)
-    chart.save("{}.html".format(filename))
+    hist.save("{}_hist.html".format(filename))
+
+    data_np = np.array([d[1] for d in visited])
+    data_hist, _ = np.histogram(data_np, bins=np.linspace(-0.25, 0.25, 100), density=True)
+    print("Entropy of state distribution: ", scipy.stats.entropy(data_hist))
 
 
 def load_decoder(env_name, name):
@@ -128,6 +142,9 @@ if __name__ == "__main__":
         if args.decoder:
             decoder = load_decoder(args.env_name, args.decoder)
             policy = RandomEmbeddedPolicy(1, decoder, None)
+        elif args.dummy_decoder:
+            decoder = DummyDecoder(action_dim, args.dummy_traj_len, env.action_space)
+            policy = RandomEmbeddedPolicy(1, decoder, 1)
         else:
             policy = RandomPolicy(env.action_space)
     elif args.policy_name == 'constant':

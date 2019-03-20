@@ -13,13 +13,13 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class RandomEmbeddedPolicy(object):
-    def __init__(self, max_action, decoder):
+    def __init__(self, max_action, decoder, max_e_action=None):
         self.decoder = decoder
         self.e_action_dim = decoder.embed_dim
         self.max_action = max_action
 
         # set the maximum action in embedding space to the largest value the decoder saw during training
-        self.max_e_action = self.decoder.max_embedding
+        self.max_e_action = max_e_action if max_e_action is not None else float(self.decoder.max_embedding)
 
         self.pending_plan = torch.Tensor(0, 0, 0).to(device)
         self.current_e_action = None
@@ -30,6 +30,7 @@ class RandomEmbeddedPolicy(object):
             e_action = torch.Tensor(1, self.e_action_dim).to(device)
             # e_action.normal_(0, 1)
             e_action.uniform_(-self.max_e_action, self.max_e_action)
+            # import ipdb; ipdb.set_trace()
 
             self.pending_plan = self.decoder(e_action)
             self.current_e_action = e_action

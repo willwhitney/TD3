@@ -13,12 +13,11 @@ import OurDDPG
 import DDPG
 from DummyDecoder import DummyDecoder
 
-import sys
-# so it can find the action decoder class and LinearPointMass
-sys.path.insert(0, '../action-embedding')
 from pointmass import point_mass
-
 import reacher_family
+
+import sys # so it can find the action decoder class
+sys.path.insert(0, '../action-embedding')
 
 # so it can find SparseReacher
 # sys.path.insert(0, '../pytorch-a2c-ppo-acktr')
