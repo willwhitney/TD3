@@ -15,17 +15,13 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # Implementation of Twin Delayed Deep Deterministic Policy Gradients (TD3)
 # Paper: https://arxiv.org/abs/1802.09477
 
-def build_conv(arch, img_width, spec_norm=False):
-    def add_spec_norm(module):
-        if spec_norm: return nn.utils.spectral_norm(module)
-        else: return module
-
+def build_conv(arch, img_width):
     if arch == "mine":
         # conv_output_dim = 576
         conv_layers = nn.ModuleList([
-            add_spec_norm(nn.Conv2d(9, 32, 8, stride=2)),
-            add_spec_norm(nn.Conv2d(32, 32, 4, stride=1)),
-            add_spec_norm(nn.Conv2d(32, 1, 3)),
+            nn.Conv2d(9, 32, 8, stride=2),
+            nn.Conv2d(32, 32, 4, stride=1),
+            nn.Conv2d(32, 1, 3),
         ])
 
     elif arch == "mine_bn":
@@ -102,7 +98,7 @@ def ddpg_init(conv_layers, lin_layers):
 class Actor(nn.Module):
     def __init__(self, action_dim, max_action, arch, initialize, img_width):
         super(Actor, self).__init__()
-        self.conv_layers, self.conv_output_dim = build_conv(arch, img_width, spec_norm=True)
+        self.conv_layers, self.conv_output_dim = build_conv(arch, img_width)
 
         if "bn" in arch:
             self.lin_layers = nn.ModuleList([
@@ -115,8 +111,8 @@ class Actor(nn.Module):
             ])
         else:
             self.lin_layers = nn.ModuleList([
-                nn.utils.spectral_norm(nn.Linear(self.conv_output_dim, 200)),
-                nn.utils.spectral_norm(nn.Linear(200, 200)),
+                nn.Linear(self.conv_output_dim, 200),
+                nn.Linear(200, 200),
                 nn.Linear(200, action_dim),
             ])
 
@@ -146,24 +142,19 @@ class Actor(nn.Module):
 class Critic(nn.Module):
     def __init__(self, action_dim, arch, initialize, img_width):
         super(Critic, self).__init__()
-        # self.q1_conv_layers, self.conv_output_dim = build_conv(arch, img_width)
-        self.q1_conv_layers, self.conv_output_dim = build_conv(arch, img_width, spec_norm=True)
+        self.q1_conv_layers, self.conv_output_dim = build_conv(arch, img_width)
         self.q2_conv_layers, _ = build_conv(arch, img_width)
 
 
         self.q1_lin_layers = nn.ModuleList([
-            nn.utils.spectral_norm(nn.Linear(self.conv_output_dim + action_dim, 200)),
-            # nn.Linear(self.conv_output_dim + action_dim, 200),
-            nn.utils.spectral_norm(nn.Linear(200, 200)),
-            # nn.Linear(200, 200),
+            nn.Linear(self.conv_output_dim + action_dim, 200),
+            nn.Linear(200, 200),
             nn.Linear(200, 1),
         ])
 
         self.q2_lin_layers = nn.ModuleList([
-            nn.utils.spectral_norm(nn.Linear(self.conv_output_dim + action_dim, 200)),
-            # nn.Linear(self.conv_output_dim + action_dim, 200),
-            nn.utils.spectral_norm(nn.Linear(200, 200)),
-            # nn.Linear(200, 200),
+            nn.Linear(self.conv_output_dim + action_dim, 200),
+            nn.Linear(200, 200),
             nn.Linear(200, 1),
         ])
 
