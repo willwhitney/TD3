@@ -180,41 +180,80 @@ code_dir = '/private/home/willwhitney/code'
 #     },
 # ]
 
-basename = "manip_white_traj8"
+# basename = "manip_white_traj8"
+# grids = [
+#     # raw
+#     # {
+#     #     "main_file": ['main'],
+#     #     "env_name": [
+#     #         'dm.manipulator.bring_ball',
+#     #     ],
+
+#     #     # "start_timesteps": [0],
+#     #     "max_timesteps": [1e7],
+#     #     "eval_freq": [5e3],
+#     #     "render_freq": [1e6],
+#     #     "seed": list(range(8)),
+#     # },
+
+
+#     # learned embedding
+#     {
+#         "main_file": ['main_embedded'],
+#         "env_name": [
+#             'dm.manipulator.bring_ball',
+#         ],
+#         "decoder": [
+#             # "white_traj4_z5",
+#             "white_traj8_z5",
+#         ],
+
+#         # "start_timesteps": [0],
+#         "max_timesteps": [1e7],
+#         "eval_freq": [5e3],
+#         "render_freq": [1e6],
+#         "seed": list(range(8)),
+#     },
+# ]
+
+basename = "PRV128_norm_workers0_take3"
 grids = [
     # raw
-    # {
-    #     "main_file": ['main'],
-    #     "env_name": [
-    #         'dm.manipulator.bring_ball',
-    #     ],
-
-    #     # "start_timesteps": [0],
-    #     "max_timesteps": [1e7],
-    #     "eval_freq": [5e3],
-    #     "render_freq": [1e6],
-    #     "seed": list(range(8)),
-    # },
-
-
-    # learned embedding
     {
-        "main_file": ['main_embedded'],
+        "main_file": ['main_pixels'],
         "env_name": [
-            'dm.manipulator.bring_ball',
+            'ReacherVertical-v2',
         ],
-        "decoder": [
-            # "white_traj4_z5",
-            "white_traj8_z5",
-        ],
+        "arch": ['mine_bn', 'ilya_bn'],
+        "init": [True],
 
         # "start_timesteps": [0],
-        "max_timesteps": [1e7],
-        "eval_freq": [5e3],
-        "render_freq": [1e6],
-        "seed": list(range(8)),
+        "max_timesteps": [1e6],
+        "eval_freq": [1e3],
+        "render_freq": [1e4],
+        "seed": list(range(4)),
     },
 ]
+
+# basename = "PRV128_norm_take3"
+# grids = [
+#     # raw
+#     {
+#         "main_file": ['main_pixels'],
+#         "env_name": [
+#             'ReacherVertical-v2',
+#         ],
+#         "arch": ['mine', 'mine_bn', 'ilya', 'ilya_bn'],
+#         "init": [True],
+
+#         # "start_timesteps": [0],
+#         "max_timesteps": [1e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e4],
+#         "seed": list(range(4)),
+#     },
+# ]
+
 
 
 jobs = []
@@ -296,16 +335,17 @@ for job in jobs:
         slurmfile.write("#SBATCH --export=ALL\n")
         slurmfile.write("#SBATCH --signal=USR1@600\n")
         # slurmfile.write("#SBATCH --time=0-02\n")
-        slurmfile.write("#SBATCH --time=2-00\n")
+        slurmfile.write("#SBATCH --time=0-12\n")
+        # slurmfile.write("#SBATCH --time=2-00\n")
         # slurmfile.write("#SBATCH -p dev\n")
-        slurmfile.write("#SBATCH -p uninterrupted,dev\n")
+        # slurmfile.write("#SBATCH -p uninterrupted,dev\n")
         # slurmfile.write("#SBATCH -p uninterrupted\n")
-        # slurmfile.write("#SBATCH -p dev,uninterrupted,priority\n")
-        # slurmfile.write("#SBATCH --comment='ICLR workshop 3/7'\n")
+        slurmfile.write("#SBATCH -p dev,uninterrupted,priority\n")
+        slurmfile.write("#SBATCH --comment='contract end 4/24'\n")
         slurmfile.write("#SBATCH -N 1\n")
-        slurmfile.write("#SBATCH --mem=32gb\n")
+        slurmfile.write("#SBATCH --mem=64gb\n")
 
-        slurmfile.write("#SBATCH -c 3\n")
+        slurmfile.write("#SBATCH -c 4\n")
         slurmfile.write("#SBATCH --gres=gpu:1\n")
 
         # slurmfile.write("#SBATCH -c 40\n")
