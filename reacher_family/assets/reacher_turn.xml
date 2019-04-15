@@ -34,8 +34,8 @@
 
 		<body name="spinner" pos=".35 0 .25">
 		  <joint name="hinge" frictionloss=".1" damping="3" limited="false" axis="0 -1 0" />
-		  <geom name="cap1" type="capsule" size=".04 .09"  pos=".02 0 0" rgba="0.6 0.2 0.2 1" />
-		  <geom name="cap2" type="capsule" size=".04 .09"  pos="-.02 0 0" rgba="0.6 0.2 0.2 1" />
+		  <geom name="cap1" type="capsule" size=".04 .09"  pos=".02 0 0" rgba="0.2 0.6 0.2 1" />
+		  <geom name="cap2" type="capsule" size=".04 .09"  pos="-.02 0 0" rgba="0.2 0.6 0.2 1" />
 		  <site name="tip" type="sphere"  size=".02" pos="0 0 .13" />
 		  <geom name="spinner_decoration" type="cylinder" fromto="0 -.045 0 0 .045 0" size=".02" />
 		</body>
