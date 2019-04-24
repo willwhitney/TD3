@@ -5,13 +5,13 @@ import argparse
 import os
 from baselines import bench
 import sys
+import skimage.transform
 
 import utils
-import TD3
-import EmbeddedTD3
+import TD3_pixels
 import OurDDPG
 import DDPG
-from DummyDecoder import DummyDecoder
+from pixel_wrapper import PixelObservationWrapper, IMG_SIZE, INITIAL_IMG_SIZE
 
 # so it can find the action decoder class and LinearPointMass
 sys.path.insert(0, '../action-embedding')
@@ -27,7 +27,7 @@ def evaluate_policy(policy, eval_episodes=10):
         policy.reset()
         done = False
         while not done:
-            action = policy.select_action(np.array(obs))
+            action = policy.select_action(obs)
             # import ipdb; ipdb.set_trace()
             obs, reward, done, _ = env.step(action)
             avg_reward += reward
@@ -44,12 +44,15 @@ def render_policy(policy, log_dir, total_timesteps, eval_episodes=5):
     for episode in range(eval_episodes):
         obs = env.reset()
         policy.reset()
-        frames.append(env.render(mode='rgb_array'))
+        raw_frame = env.render(mode='rgb_array', width=INITIAL_IMG_SIZE, height=INITIAL_IMG_SIZE)
+        frame = skimage.transform.resize(raw_frame, (IMG_SIZE, IMG_SIZE))*255
+        frames.append(frame)
         done = False
         while not done:
-            action = policy.select_action(np.array(obs))
+            action = policy.select_action(obs)
             obs, reward, done, _ = env.step(action)
-            frame = env.render(mode='rgb_array')
+            raw_frame = env.render(mode='rgb_array', width=INITIAL_IMG_SIZE, height=INITIAL_IMG_SIZE)
+            frame = skimage.transform.resize(raw_frame, (IMG_SIZE, IMG_SIZE))*255
 
             frame[:, :, 1] = (frame[:, :, 1].astype(float) + reward * 100).clip(0, 255)
             frames.append(frame)
@@ -60,11 +63,10 @@ def render_policy(policy, log_dir, total_timesteps, eval_episodes=5):
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--name", default=None)                         # Job name
     parser.add_argument("--policy_name", default="TD3")                 # Policy name
-    parser.add_argument("--env_name", default="HalfCheetah-v1")         # OpenAI gym environment name
+    parser.add_argument("--env_name", default="Reacher-v2")             # OpenAI gym environment name
     parser.add_argument("--seed", default=0, type=int)                  # Sets Gym, PyTorch and Numpy seeds
     parser.add_argument("--start_timesteps", default=1e4, type=float)   # How many time steps purely random policy is run for
     parser.add_argument("--eval_freq", default=5e3, type=float)         # How often (time steps) we evaluate
@@ -83,11 +85,16 @@ if __name__ == "__main__":
     parser.add_argument('--dummy_traj_len', type=int, default=1)        # traj_len of dummy decoder
     parser.add_argument("--replay_size", default=1e6, type=int)         # Size of replay buffer
     parser.add_argument("--render_freq", default=5e3, type=float)       # How often (time steps) we render
+    
+    parser.add_argument("--init", action="store_true")                  # use the initialization from DDPG for networks
+    parser.add_argument("--arch", default="mine")                       # which network architecture to use (mine or one from https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail/blob/master/a2c_ppo_acktr/model.py#L176)
+    parser.add_argument("--stack", default=4, type=int)                 # frames to stack together as input
+
     args = parser.parse_args()
     args.save_models = not args.no_save_models
 
     if args.name is None:
-        args.name = "{}_{}_seed{}".format(args.env_name, args.policy_name, args.seed)
+        args.name = "Pixel{}_{}_seed{}".format(args.env_name, args.policy_name, args.seed)
 
     # file_name = "%s_%s_%s" % (args.policy_name, args.env_name, str(args.seed))
     print("---------------------------------------")
@@ -119,6 +126,7 @@ if __name__ == "__main__":
     # add a Monitor and log the command-line options
     log_dir = "results/{}/".format(args.name)
     os.makedirs(log_dir, exist_ok=True)
+    env = PixelObservationWrapper(env)
     env = bench.Monitor(env, log_dir, allow_early_resets=True)
     utils.write_options(args, log_dir)
 
@@ -127,11 +135,15 @@ if __name__ == "__main__":
     max_action = float(env.action_space.high[0])
 
     # Initialize policy
-    if args.policy_name == "TD3": policy = TD3.TD3(state_dim, action_dim, max_action)
+    if args.policy_name == "TD3": 
+        policy = TD3_pixels.TD3Pixels(state_dim, action_dim, max_action, 
+                arch=args.arch, initialize=args.init, img_width=IMG_SIZE, stack=args.stack)
     elif args.policy_name == "OurDDPG": policy = OurDDPG.DDPG(state_dim, action_dim, max_action)
     elif args.policy_name == "DDPG": policy = DDPG.DDPG(state_dim, action_dim, max_action)
+    policy.mode('eval')
 
-    replay_buffer = utils.ReplayBuffer(max_size=args.replay_size)
+    # replay_buffer = utils.ReplayBuffer(max_size=args.replay_size)
+    replay_buffer = utils.ReplayDataset(max_size=args.replay_size)
 
     # Evaluate untrained policy
     evaluations = [(0, 0, evaluate_policy(policy))]

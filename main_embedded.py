@@ -13,7 +13,7 @@ import OurDDPG
 import DDPG
 from DummyDecoder import DummyDecoder
 
-from pointmass import point_mass
+# from pointmass import point_mass
 import reacher_family
 
 import sys # so it can find the action decoder class
@@ -44,23 +44,23 @@ def evaluate_policy(policy, eval_episodes=10):
 
 
 def render_policy(policy, log_dir, total_timesteps, eval_episodes=5):
-	frames = []
-	for episode in range(eval_episodes):
-		obs = env.reset()
-		policy.reset()
-		frames.append(env.render(mode='rgb_array'))
-		done = False
-		while not done:
-			action, _, _ = policy.select_action(np.array(obs))
-			obs, reward, done, _ = env.step(action)
-			frame = env.render(mode='rgb_array')
+    frames = []
+    for episode in range(eval_episodes):
+        obs = env.reset()
+        policy.reset()
+        frames.append(env.render(mode='rgb_array'))
+        done = False
+        while not done:
+            action, _, _ = policy.select_action(np.array(obs))
+            obs, reward, done, _ = env.step(action)
+            frame = env.render(mode='rgb_array')
 
-			frame[:, :, 1] = (frame[:, :, 1].astype(float) + reward * 100).clip(0, 255)
-			frames.append(frame)
+            frame[:, :, 1] = (frame[:, :, 1].astype(float) + reward * 100).clip(0, 255)
+            frames.append(frame)
 
-	utils.save_gif('{}/{}.mp4'.format(log_dir, total_timesteps),
-				   [torch.tensor(frame.copy()).float()/255 for frame in frames],
-				   color_last=True)
+    utils.save_gif('{}/{}.mp4'.format(log_dir, total_timesteps),
+                   [torch.tensor(frame.copy()).float()/255 for frame in frames],
+                   color_last=True)
 
 
 if __name__ == "__main__":
@@ -82,6 +82,7 @@ if __name__ == "__main__":
     parser.add_argument("--noise_clip", default=0.5, type=float)        # Range to clip target policy noise
     parser.add_argument("--policy_freq", default=2, type=int)           # Frequency of delayed policy updates
 
+    parser.add_argument("--source_env", default=None)                   # env name to take the decoder from
     parser.add_argument("--decoder", default=None, type=str)            # Name of saved decoder
     parser.add_argument("--dummy_decoder", action="store_true")         # use a dummy decoder that repeats actions
     parser.add_argument('--dummy_traj_len', type=int, default=1)        # traj_len of dummy decoder
@@ -105,6 +106,9 @@ if __name__ == "__main__":
         os.makedirs("./pytorch_models")
 
     if args.env_name.startswith('dm'):
+        import os
+        os.environ["MUJOCO_GL"] = 'osmesa'
+
         import dm_control2gym
         _, domain, task = args.env_name.split('.')
         env = dm_control2gym.make(domain_name=domain, task_name=task)
@@ -130,7 +134,8 @@ if __name__ == "__main__":
 
     # Initialize policy
     if args.decoder is not None:
-        if 'SparsishPointMass' in args.env_name: base_env_name = 'SparsishPointMass-v0'
+        if args.source_env is not None: base_env_name = args.source_env
+        elif 'SparsishPointMass' in args.env_name: base_env_name = 'SparsishPointMass-v0'
         elif 'PointMass' in args.env_name: base_env_name = 'LinearPointMass-v0'
         elif 'ReacherVertical' in args.env_name: base_env_name = 'ReacherVertical-v2'
         elif 'ReacherPush' in args.env_name: base_env_name = 'ReacherVertical-v2'

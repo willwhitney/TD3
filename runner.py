@@ -51,49 +51,233 @@ code_dir = '/private/home/willwhitney/code'
 #     },
 # ]
 
-basename = "RFnew3_trajs"
-grids = [
-#     # raw
+# basename = "RFnew3_trajs"
+# grids = [
+# #     # raw
+# #     {
+# #         "main_file": ['main'],
+# #         "env_name": [
+# #             'ReacherVertical-v2',
+# #             'ReacherPush-v2',
+# #             'ReacherTurn-v2',
+# #         ],
+
+# #         "start_timesteps": [0],
+# #         "max_timesteps": [1e7],
+# #         "eval_freq": [1e2],
+# #         "render_freq": [1e4],
+# #         "seed": list(range(8)),
+# #     },
+
+
+# #     # learned embedding
 #     {
-#         "main_file": ['main'],
+#         "main_file": ['main_embedded'],
 #         "env_name": [
 #             'ReacherVertical-v2',
 #             'ReacherPush-v2',
 #             'ReacherTurn-v2',
 #         ],
+#         "decoder": [
+#             # "nocollide_step001_gear200_white_qvel",
+#             "nocollide_step001_gear200_white_qvel_traj1",
+#             "nocollide_step001_gear200_white_qvel_traj8",
+#             # "nocollide_white_qvel",
+#         ],
 
+#         # "policy_noise": [0.4, 0.2, 0.1],
+#         # "expl_noise": [0.2, 0.1, 0.05],
 #         "start_timesteps": [0],
-#         "max_timesteps": [1e7],
+#         "max_timesteps": [5e6],
 #         "eval_freq": [1e2],
 #         "render_freq": [1e4],
 #         "seed": list(range(8)),
 #     },
+# ]
+
+# basename = "RF_transfergap"
+# grids = [
+# #     # raw
+# #     {
+# #         "main_file": ['main'],
+# #         "env_name": [
+# #             'ReacherVertical-v2',
+# #             'ReacherPush-v2',
+# #             'ReacherTurn-v2',
+# #         ],
+
+# #         "start_timesteps": [0],
+# #         "max_timesteps": [1e7],
+# #         "eval_freq": [1e2],
+# #         "render_freq": [1e4],
+# #         "seed": list(range(8)),
+# #     },
+
+
+# #     # learned embedding
+#     {
+#         "main_file": ['main_embedded'],
+#         "env_name": [
+#             'ReacherVertical-v2',
+#             'ReacherPush-v2',
+#             # 'ReacherTurn-v2',
+#         ],
+#         "decoder": [
+#             "transfertest",
+#         ],
+#         "source_env": [
+#             "ReacherVertical-v2",
+#             "ReacherPush-v2",
+#         ],
+
+#         # "policy_noise": [0.4, 0.2, 0.1],
+#         # "expl_noise": [0.2, 0.1, 0.05],
+#         "start_timesteps": [0],
+#         "max_timesteps": [5e6],
+#         "eval_freq": [1e2],
+#         "render_freq": [1e4],
+#         "seed": list(range(8)),
+#     },
+# ]
+
+# basename = "Thrower_transfergap"
+# grids = [
+#     # raw
+#     # {
+#     #     "main_file": ['main'],
+#     #     "env_name": [
+#     #         'Pusher-v2',
+#     #         'Striker-v2',
+#     #         'Thrower-v2',
+#     #     ],
+
+#     #     # "start_timesteps": [0],
+#     #     "max_timesteps": [1e7],
+#     #     "eval_freq": [5e3],
+#     #     "render_freq": [1e5],
+#     #     "seed": list(range(8)),
+#     # },
 
 
 #     # learned embedding
+#     {
+#         "main_file": ['main_embedded'],
+#         "env_name": [
+#             'Thrower-v2',
+#         ],
+#         "decoder": [
+#             "transfertest",
+#         ],
+#         "source_env": [
+#             "Thrower-v2",
+#         ],
+
+#         # "start_timesteps": [0],
+#         "max_timesteps": [1e7],
+#         "eval_freq": [5e3],
+#         "render_freq": [1e5],
+#         "seed": list(range(8)),
+#     },
+# ]
+
+# basename = "manip_white_traj8"
+# grids = [
+#     # raw
+#     # {
+#     #     "main_file": ['main'],
+#     #     "env_name": [
+#     #         'dm.manipulator.bring_ball',
+#     #     ],
+
+#     #     # "start_timesteps": [0],
+#     #     "max_timesteps": [1e7],
+#     #     "eval_freq": [5e3],
+#     #     "render_freq": [1e6],
+#     #     "seed": list(range(8)),
+#     # },
+
+
+#     # learned embedding
+#     {
+#         "main_file": ['main_embedded'],
+#         "env_name": [
+#             'dm.manipulator.bring_ball',
+#         ],
+#         "decoder": [
+#             # "white_traj4_z5",
+#             "white_traj8_z5",
+#         ],
+
+#         # "start_timesteps": [0],
+#         "max_timesteps": [1e7],
+#         "eval_freq": [5e3],
+#         "render_freq": [1e6],
+#         "seed": list(range(8)),
+#     },
+# ]
+
+# basename = "PRV128r32_stack4_t2_ddpglr_init"
+# grids = [
+#     # raw
+#     {
+#         "main_file": ['main_pixels'],
+#         "env_name": [
+#             'ReacherVertical-v2',
+#         ],
+#         # "arch": ['mine_bn', 'ilya_bn'],
+#         # "arch": ['minev2_bn', 'minev3_bn'],
+#         "arch": ['mine_bn', 'minev2_bn', 'minev3_bn', 'minev4_bn'],
+#         "init": [True],
+
+#         # "start_timesteps": [0],
+#         "max_timesteps": [1e7],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e4],
+#         "seed": list(range(4)),
+#     },
+# ]
+
+basename = "PRV128r32_stack4_embed"
+grids = [
+    # raw
     {
-        "main_file": ['main_embedded'],
+        "main_file": ['main_embedded_pixels'],
         "env_name": [
             'ReacherVertical-v2',
-            'ReacherPush-v2',
-            'ReacherTurn-v2',
         ],
-        "decoder": [
-            # "nocollide_step001_gear200_white_qvel",
-            "nocollide_step001_gear200_white_qvel_traj1",
-            "nocollide_step001_gear200_white_qvel_traj8",
-            # "nocollide_white_qvel",
-        ],
+        # "arch": ['mine_bn', 'ilya_bn'],
+        # "arch": ['minev2_bn', 'minev3_bn'],
+        "arch": ['mine_bn', 'minev2_bn', 'minev3_bn', 'minev4_bn'],
+        "init": [True, False],
 
-        # "policy_noise": [0.4, 0.2, 0.1],
-        # "expl_noise": [0.2, 0.1, 0.05],
-        "start_timesteps": [0],
-        "max_timesteps": [5e6],
-        "eval_freq": [1e2],
+        "decoder": ["nocollide_step001_gear200_white_qvel"],
+
+        # "start_timesteps": [0],
+        "max_timesteps": [1e7],
+        "eval_freq": [1e3],
         "render_freq": [1e4],
-        "seed": list(range(8)),
+        "seed": list(range(4)),
     },
 ]
+
+# basename = "PRV128_norm_take3"
+# grids = [
+#     # raw
+#     {
+#         "main_file": ['main_pixels'],
+#         "env_name": [
+#             'ReacherVertical-v2',
+#         ],
+#         "arch": ['mine', 'mine_bn', 'ilya', 'ilya_bn'],
+#         "init": [True],
+
+#         # "start_timesteps": [0],
+#         "max_timesteps": [1e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e4],
+#         "seed": list(range(4)),
+#     },
+# ]
 
 
 
@@ -176,16 +360,17 @@ for job in jobs:
         slurmfile.write("#SBATCH --export=ALL\n")
         slurmfile.write("#SBATCH --signal=USR1@600\n")
         # slurmfile.write("#SBATCH --time=0-02\n")
-        slurmfile.write("#SBATCH --time=2-00\n")
+        # slurmfile.write("#SBATCH --time=0-12\n")
+        slurmfile.write("#SBATCH --time=1-00\n")
         # slurmfile.write("#SBATCH -p dev\n")
         # slurmfile.write("#SBATCH -p uninterrupted,dev\n")
         # slurmfile.write("#SBATCH -p uninterrupted\n")
         slurmfile.write("#SBATCH -p dev,uninterrupted,priority\n")
-        slurmfile.write("#SBATCH --comment='ICLR workshop 3/7'\n")
+        slurmfile.write("#SBATCH --comment='contract end 4/24'\n")
         slurmfile.write("#SBATCH -N 1\n")
-        slurmfile.write("#SBATCH --mem=32gb\n")
+        slurmfile.write("#SBATCH --mem=128gb\n")
 
-        slurmfile.write("#SBATCH -c 3\n")
+        slurmfile.write("#SBATCH -c 4\n")
         slurmfile.write("#SBATCH --gres=gpu:1\n")
 
         # slurmfile.write("#SBATCH -c 40\n")
