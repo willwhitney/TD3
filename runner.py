@@ -216,19 +216,44 @@ code_dir = '/private/home/willwhitney/code'
 #     },
 # ]
 
-basename = "PRV128_norm_workers0_take3"
+# basename = "PRV128r32_stack4_t2_ddpglr_init"
+# grids = [
+#     # raw
+#     {
+#         "main_file": ['main_pixels'],
+#         "env_name": [
+#             'ReacherVertical-v2',
+#         ],
+#         # "arch": ['mine_bn', 'ilya_bn'],
+#         # "arch": ['minev2_bn', 'minev3_bn'],
+#         "arch": ['mine_bn', 'minev2_bn', 'minev3_bn', 'minev4_bn'],
+#         "init": [True],
+
+#         # "start_timesteps": [0],
+#         "max_timesteps": [1e7],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e4],
+#         "seed": list(range(4)),
+#     },
+# ]
+
+basename = "PRV128r32_stack4_embed"
 grids = [
     # raw
     {
-        "main_file": ['main_pixels'],
+        "main_file": ['main_embedded_pixels'],
         "env_name": [
             'ReacherVertical-v2',
         ],
-        "arch": ['mine_bn', 'ilya_bn'],
-        "init": [True],
+        # "arch": ['mine_bn', 'ilya_bn'],
+        # "arch": ['minev2_bn', 'minev3_bn'],
+        "arch": ['mine_bn', 'minev2_bn', 'minev3_bn', 'minev4_bn'],
+        "init": [True, False],
+
+        "decoder": ["nocollide_step001_gear200_white_qvel"],
 
         # "start_timesteps": [0],
-        "max_timesteps": [1e6],
+        "max_timesteps": [1e7],
         "eval_freq": [1e3],
         "render_freq": [1e4],
         "seed": list(range(4)),
@@ -335,15 +360,15 @@ for job in jobs:
         slurmfile.write("#SBATCH --export=ALL\n")
         slurmfile.write("#SBATCH --signal=USR1@600\n")
         # slurmfile.write("#SBATCH --time=0-02\n")
-        slurmfile.write("#SBATCH --time=0-12\n")
-        # slurmfile.write("#SBATCH --time=2-00\n")
+        # slurmfile.write("#SBATCH --time=0-12\n")
+        slurmfile.write("#SBATCH --time=1-00\n")
         # slurmfile.write("#SBATCH -p dev\n")
         # slurmfile.write("#SBATCH -p uninterrupted,dev\n")
         # slurmfile.write("#SBATCH -p uninterrupted\n")
         slurmfile.write("#SBATCH -p dev,uninterrupted,priority\n")
         slurmfile.write("#SBATCH --comment='contract end 4/24'\n")
         slurmfile.write("#SBATCH -N 1\n")
-        slurmfile.write("#SBATCH --mem=64gb\n")
+        slurmfile.write("#SBATCH --mem=128gb\n")
 
         slurmfile.write("#SBATCH -c 4\n")
         slurmfile.write("#SBATCH --gres=gpu:1\n")

@@ -8,14 +8,14 @@ import sys
 import skimage.transform
 
 import utils
-import TD3_pixels
-import OurDDPG
-import DDPG
+from EmbeddedTD3_pixels import EmbeddedTD3Pixels
+from RandomEmbeddedPolicy import RandomEmbeddedPolicy
 from pixel_wrapper import PixelObservationWrapper, IMG_SIZE, INITIAL_IMG_SIZE
+from DummyDecoder import DummyDecoder
 
 # so it can find the action decoder class and LinearPointMass
 sys.path.insert(0, '../action-embedding')
-from pointmass import point_mass
+# from pointmass import point_mass
 
 import reacher_family
 
@@ -27,7 +27,7 @@ def evaluate_policy(policy, eval_episodes=10):
         policy.reset()
         done = False
         while not done:
-            action = policy.select_action(obs)
+            action, _, _ = policy.select_action(np.array(obs))
             # import ipdb; ipdb.set_trace()
             obs, reward, done, _ = env.step(action)
             avg_reward += reward
@@ -44,15 +44,21 @@ def render_policy(policy, log_dir, total_timesteps, eval_episodes=5):
     for episode in range(eval_episodes):
         obs = env.reset()
         policy.reset()
-        raw_frame = env.render(mode='rgb_array', width=INITIAL_IMG_SIZE, height=INITIAL_IMG_SIZE)
-        frame = skimage.transform.resize(raw_frame, (IMG_SIZE, IMG_SIZE))*255
+        # raw_frame = env.render(mode='rgb_array', width=INITIAL_IMG_SIZE, height=INITIAL_IMG_SIZE)
+        # frame = skimage.transform.resize(raw_frame, (IMG_SIZE, IMG_SIZE))*255
+
+        frame = env.render_obs(color_last=True) * 255
+        # import ipdb; ipdb.set_trace()
+
         frames.append(frame)
         done = False
         while not done:
-            action = policy.select_action(obs)
+            action, _, _ = policy.select_action(np.array(obs))
             obs, reward, done, _ = env.step(action)
-            raw_frame = env.render(mode='rgb_array', width=INITIAL_IMG_SIZE, height=INITIAL_IMG_SIZE)
-            frame = skimage.transform.resize(raw_frame, (IMG_SIZE, IMG_SIZE))*255
+            # raw_frame = env.render(mode='rgb_array', width=INITIAL_IMG_SIZE, height=INITIAL_IMG_SIZE)
+            # frame = skimage.transform.resize(raw_frame, (IMG_SIZE, IMG_SIZE))*255
+
+            frame = env.render_obs(color_last=True) * 255
 
             frame[:, :, 1] = (frame[:, :, 1].astype(float) + reward * 100).clip(0, 255)
             frames.append(frame)
@@ -80,16 +86,17 @@ if __name__ == "__main__":
     parser.add_argument("--noise_clip", default=0.5, type=float)        # Range to clip target policy noise
     parser.add_argument("--policy_freq", default=2, type=int)           # Frequency of delayed policy updates
 
+    parser.add_argument("--source_env", default=None)                   # env name to take the decoder from
     parser.add_argument("--decoder", default=None, type=str)            # Name of saved decoder
     parser.add_argument("--dummy_decoder", action="store_true")         # use a dummy decoder that repeats actions
     parser.add_argument('--dummy_traj_len', type=int, default=1)        # traj_len of dummy decoder
     parser.add_argument("--replay_size", default=1e6, type=int)         # Size of replay buffer
+    parser.add_argument("--max_e_action", default=None, type=int)       # Clip the scale of the action embeddings
     parser.add_argument("--render_freq", default=5e3, type=float)       # How often (time steps) we render
     
     parser.add_argument("--init", action="store_true")                  # use the initialization from DDPG for networks
     parser.add_argument("--arch", default="mine")                       # which network architecture to use (mine or one from https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail/blob/master/a2c_ppo_acktr/model.py#L176)
     parser.add_argument("--stack", default=4, type=int)                 # frames to stack together as input
-
     args = parser.parse_args()
     args.save_models = not args.no_save_models
 
@@ -127,7 +134,7 @@ if __name__ == "__main__":
     log_dir = "results/{}/".format(args.name)
     os.makedirs(log_dir, exist_ok=True)
     env = PixelObservationWrapper(env)
-    env = bench.Monitor(env, log_dir, allow_early_resets=True)
+    # env = bench.Monitor(env, log_dir, allow_early_resets=True)
     utils.write_options(args, log_dir)
 
     state_dim = env.observation_space.shape[0]
@@ -135,15 +142,35 @@ if __name__ == "__main__":
     max_action = float(env.action_space.high[0])
 
     # Initialize policy
-    if args.policy_name == "TD3": 
-        policy = TD3_pixels.TD3Pixels(state_dim, action_dim, max_action, 
-                arch=args.arch, initialize=args.init, img_width=IMG_SIZE, stack=args.stack)
-    elif args.policy_name == "OurDDPG": policy = OurDDPG.DDPG(state_dim, action_dim, max_action)
-    elif args.policy_name == "DDPG": policy = DDPG.DDPG(state_dim, action_dim, max_action)
+    if args.decoder is not None:
+        if args.source_env is not None: base_env_name = args.source_env
+        elif 'SparsishPointMass' in args.env_name: base_env_name = 'SparsishPointMass-v0'
+        elif 'PointMass' in args.env_name: base_env_name = 'LinearPointMass-v0'
+        elif 'ReacherVertical' in args.env_name: base_env_name = 'ReacherVertical-v2'
+        elif 'ReacherPush' in args.env_name: base_env_name = 'ReacherVertical-v2'
+        elif 'ReacherSpin' in args.env_name: base_env_name = 'ReacherVertical-v2'
+        elif 'ReacherTurn' in args.env_name: base_env_name = 'ReacherVertical-v2'
+        elif 'ReacherTest' in args.env_name: base_env_name = 'ReacherTest-v2'
+        elif 'Reacher' in args.env_name: base_env_name = 'Reacher-v2'
+        elif 'Striker' in args.env_name: base_env_name = 'Pusher-v2'
+        elif 'Thrower' in args.env_name: base_env_name = 'Pusher-v2'
+        elif 'dm.manipulator' in args.env_name: base_env_name = 'dm.manipulator.bring_ball'
+        else: base_env_name = args.env_name.strip("Super").strip("Sparse")
+        decoder_path = "../action-embedding/results/{}/{}/decoder.pt".format(base_env_name, args.decoder)
+        print("Loading decoder from {}".format(decoder_path))
+        decoder = torch.load(decoder_path)
+    elif args.dummy_decoder:
+        decoder = DummyDecoder(action_dim, args.dummy_traj_len, env.action_space)
+    decoder.max_embedding = float(decoder.max_embedding)
+
+    policy = EmbeddedTD3Pixels(state_dim, action_dim, max_action, 
+            arch=args.arch, initialize=args.init, img_width=IMG_SIZE, stack=args.stack,
+            decoder=decoder)
+    random_policy = RandomEmbeddedPolicy(max_action, decoder)
     policy.mode('eval')
 
     # replay_buffer = utils.ReplayBuffer(max_size=args.replay_size)
-    replay_buffer = utils.ReplayDataset(max_size=args.replay_size)
+    replay_buffer = utils.EmbeddedReplayDataset(max_size=args.replay_size, traj_len=decoder.traj_len)
 
     # Evaluate untrained policy
     evaluations = [(0, 0, evaluate_policy(policy))]
@@ -157,13 +184,12 @@ if __name__ == "__main__":
     while total_timesteps < args.max_timesteps:
 
         if done:
+            # import ipdb; ipdb.set_trace()
 
             if total_timesteps != 0:
                 print("Total T: %d Episode Num: %d Episode T: %d Reward: %f" % (total_timesteps, episode_num, episode_timesteps, episode_reward))
-                if args.policy_name == "TD3":
-                    policy.train(replay_buffer, episode_timesteps, args.batch_size, args.discount, args.tau, args.policy_noise, args.noise_clip, args.policy_freq)
-                else:
-                    policy.train(replay_buffer, episode_timesteps, args.batch_size, args.discount, args.tau)
+                policy.train(replay_buffer, episode_timesteps, args.batch_size, args.discount, args.tau,
+                             args.policy_noise, args.noise_clip, args.policy_freq)
 
             # Evaluate episode
             if timesteps_since_eval >= args.eval_freq:
@@ -187,11 +213,10 @@ if __name__ == "__main__":
 
         # Select action randomly or according to policy
         if total_timesteps < args.start_timesteps:
-            action = env.action_space.sample()
+            if done: random_policy.reset()
+            action, e_action, plan_step = random_policy.select_action(np.array(obs))
         else:
-            action = policy.select_action(np.array(obs))
-            if args.expl_noise != 0:
-                action = (action + np.random.normal(0, args.expl_noise, size=env.action_space.shape[0])).clip(env.action_space.low, env.action_space.high)
+            action, e_action, plan_step = policy.select_action(np.array(obs), args.expl_noise)
 
         # Perform action
         new_obs, reward, done, _ = env.step(action)
@@ -199,7 +224,7 @@ if __name__ == "__main__":
         episode_reward += reward
 
         # Store data in replay buffer
-        replay_buffer.add((obs, new_obs, action, reward, done_bool))
+        replay_buffer.add((obs, new_obs, action, e_action, plan_step, reward, done_bool))
 
         obs = new_obs
 

@@ -15,11 +15,11 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # Implementation of Twin Delayed Deep Deterministic Policy Gradients (TD3)
 # Paper: https://arxiv.org/abs/1802.09477
 
-def build_conv(arch, img_width):
+def build_conv(arch, img_width, stack=3):
     if arch == "mine":
         # conv_output_dim = 576
         conv_layers = nn.ModuleList([
-            nn.Conv2d(9, 32, 8, stride=2),
+            nn.Conv2d(stack * 3, 32, 8, stride=2),
             nn.Conv2d(32, 32, 4, stride=1),
             nn.Conv2d(32, 1, 3),
         ])
@@ -27,8 +27,8 @@ def build_conv(arch, img_width):
     elif arch == "mine_bn":
         # conv_output_dim = 576
         conv_layers = nn.ModuleList([
-            nn.BatchNorm2d(9),
-            nn.Conv2d(9, 32, 8, stride=2),
+            nn.BatchNorm2d(stack * 3),
+            nn.Conv2d(stack * 3, 32, 8, stride=2),
             nn.BatchNorm2d(32),
             nn.Conv2d(32, 32, 4, stride=1),
             nn.BatchNorm2d(32),
@@ -38,31 +38,64 @@ def build_conv(arch, img_width):
     elif arch == "minev2":
         # conv_output_dim = 2704
         conv_layers = nn.ModuleList([
-            nn.Conv2d(9, 32, 8, stride=1),
+            nn.Conv2d(stack * 3, 32, 8, stride=1),
             nn.Conv2d(32, 32, 4, stride=1),
+            nn.Conv2d(32, 1, 3),
+        ])
+
+    elif arch == "minev2_bn":
+        # conv_output_dim = 2704
+        conv_layers = nn.ModuleList([
+            nn.BatchNorm2d(stack * 3),
+            nn.Conv2d(stack * 3, 32, 8, stride=1),
+            nn.BatchNorm2d(32),
+            nn.Conv2d(32, 32, 4, stride=1),
+            nn.BatchNorm2d(32),
             nn.Conv2d(32, 1, 3),
         ])
 
     elif arch == "minev3":
         # conv_output_dim = 3025
         conv_layers = nn.ModuleList([
-            nn.Conv2d(9, 32, 4, stride=1),
+            nn.Conv2d(stack * 3, 32, 4, stride=1),
             nn.Conv2d(32, 32, 4, stride=1),
+            nn.Conv2d(32, 1, 4),
+        ])
+
+    elif arch == "minev3_bn":
+        # conv_output_dim = 3025
+        conv_layers = nn.ModuleList([
+            nn.BatchNorm2d(stack * 3),
+            nn.Conv2d(stack * 3, 32, 4, stride=1),
+            nn.BatchNorm2d(32),
+            nn.Conv2d(32, 32, 4, stride=1),
+            nn.BatchNorm2d(32),
             nn.Conv2d(32, 1, 4),
         ])
 
     elif arch == "minev4":
         # conv_output_dim = 1849
         conv_layers = nn.ModuleList([
-            nn.Conv2d(9, 32, 8, stride=1),
+            nn.Conv2d(stack * 3, 32, 8, stride=1),
             nn.Conv2d(32, 32, 8, stride=1),
+            nn.Conv2d(32, 1, 8),
+        ])
+
+    elif arch == "minev4_bn":
+        # conv_output_dim = 1849
+        conv_layers = nn.ModuleList([
+            nn.BatchNorm2d(stack * 3),
+            nn.Conv2d(stack * 3, 32, 8, stride=1),
+            nn.BatchNorm2d(32),
+            nn.Conv2d(32, 32, 8, stride=1),
+            nn.BatchNorm2d(32),
             nn.Conv2d(32, 1, 8),
         ])
 
     elif arch == "ilya":
         # conv_output_dim = 512
         conv_layers = nn.ModuleList([
-            nn.Conv2d(9, 32, 8, stride=4),
+            nn.Conv2d(stack * 3, 32, 8, stride=4),
             nn.Conv2d(32, 32, 4, stride=2),
             nn.Conv2d(32, 32, 3),
         ])
@@ -70,8 +103,8 @@ def build_conv(arch, img_width):
     elif arch == "ilya_bn":
         # conv_output_dim = 512
         conv_layers = nn.ModuleList([
-            nn.BatchNorm2d(9),
-            nn.Conv2d(9, 32, 8, stride=4),
+            nn.BatchNorm2d(stack * 3),
+            nn.Conv2d(stack * 3, 32, 8, stride=4),
             nn.BatchNorm2d(32),
             nn.Conv2d(32, 32, 4, stride=2),
             nn.BatchNorm2d(32),
@@ -96,9 +129,9 @@ def ddpg_init(conv_layers, lin_layers):
 
 
 class Actor(nn.Module):
-    def __init__(self, action_dim, max_action, arch, initialize, img_width):
+    def __init__(self, action_dim, max_action, arch, initialize, img_width, stack):
         super(Actor, self).__init__()
-        self.conv_layers, self.conv_output_dim = build_conv(arch, img_width)
+        self.conv_layers, self.conv_output_dim = build_conv(arch, img_width, stack)
 
         if "bn" in arch:
             self.lin_layers = nn.ModuleList([
@@ -121,13 +154,8 @@ class Actor(nn.Module):
         self.max_action = max_action
 
     def forward(self, x):
-        # import ipdb; ipdb.set_trace()
         for layer in self.conv_layers:
             x = F.relu(layer(x))
-
-        # import ipdb; ipdb.set_trace()
-        # print("conv output dim: ", x.size())
-
 
         x = x.view(-1, self.conv_output_dim)
 
@@ -140,10 +168,10 @@ class Actor(nn.Module):
 
 
 class Critic(nn.Module):
-    def __init__(self, action_dim, arch, initialize, img_width):
+    def __init__(self, action_dim, arch, initialize, img_width, stack):
         super(Critic, self).__init__()
-        self.q1_conv_layers, self.conv_output_dim = build_conv(arch, img_width)
-        self.q2_conv_layers, _ = build_conv(arch, img_width)
+        self.q1_conv_layers, self.conv_output_dim = build_conv(arch, img_width, stack)
+        self.q2_conv_layers, _ = build_conv(arch, img_width, stack)
 
 
         self.q1_lin_layers = nn.ModuleList([
@@ -196,16 +224,16 @@ class Critic(nn.Module):
 
 
 class TD3Pixels(object):
-    def __init__(self, state_dim, action_dim, max_action, arch="mine", initialize=True, img_width=128):
-        self.actor = Actor(action_dim, max_action, arch, initialize, img_width).to(device)
-        self.actor_target = Actor(action_dim, max_action, arch, initialize, img_width).to(device)
+    def __init__(self, state_dim, action_dim, max_action, arch="mine", initialize=True, img_width=128, stack=4):
+        self.actor = Actor(action_dim, max_action, arch, initialize, img_width, stack).to(device)
+        self.actor_target = Actor(action_dim, max_action, arch, initialize, img_width, stack).to(device)
         self.actor_target.load_state_dict(self.actor.state_dict())
-        self.actor_optimizer = torch.optim.Adam(self.actor.parameters())
+        self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=1e-4)
 
-        self.critic = Critic(action_dim, arch, initialize, img_width).to(device)
-        self.critic_target = Critic(action_dim, arch, initialize, img_width).to(device)
+        self.critic = Critic(action_dim, arch, initialize, img_width, stack).to(device)
+        self.critic_target = Critic(action_dim, arch, initialize, img_width, stack).to(device)
         self.critic_target.load_state_dict(self.critic.state_dict())
-        self.critic_optimizer = torch.optim.Adam(self.critic.parameters())
+        self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=1e-3, weight_decay=1e-2)
 
         print(self.actor)
         print(self.critic)
