@@ -102,7 +102,7 @@ if __name__ == "__main__":
         else:
             policy = RandomPolicy(env.action_space)
     elif args.policy_name == 'constant':
-        policy = RandomPolicy.ConstantPolicy(env.action_space)
+        policy = ConstantPolicy(env.action_space)
     else:
         assert False
 
