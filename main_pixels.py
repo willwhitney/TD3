@@ -11,7 +11,7 @@ import utils
 import TD3_pixels
 import OurDDPG
 import DDPG
-from pixel_wrapper import PixelObservationWrapper, IMG_SIZE, INITIAL_IMG_SIZE
+from pixel_wrapper import PixelObservationWrapper
 
 # so it can find the action decoder class and LinearPointMass
 sys.path.insert(0, '../action-embedding')
@@ -44,15 +44,14 @@ def render_policy(policy, log_dir, total_timesteps, eval_episodes=5):
     for episode in range(eval_episodes):
         obs = env.reset()
         policy.reset()
-        raw_frame = env.render(mode='rgb_array', width=INITIAL_IMG_SIZE, height=INITIAL_IMG_SIZE)
-        frame = skimage.transform.resize(raw_frame, (IMG_SIZE, IMG_SIZE))*255
+
+        frame = env.render_obs(color_last=True) * 255
         frames.append(frame)
         done = False
         while not done:
             action = policy.select_action(obs)
             obs, reward, done, _ = env.step(action)
-            raw_frame = env.render(mode='rgb_array', width=INITIAL_IMG_SIZE, height=INITIAL_IMG_SIZE)
-            frame = skimage.transform.resize(raw_frame, (IMG_SIZE, IMG_SIZE))*255
+            frame = env.render_obs(color_last=True) * 255
 
             frame[:, :, 1] = (frame[:, :, 1].astype(float) + reward * 100).clip(0, 255)
             frames.append(frame)
@@ -89,6 +88,7 @@ if __name__ == "__main__":
     parser.add_argument("--init", action="store_true")                  # use the initialization from DDPG for networks
     parser.add_argument("--arch", default="mine")                       # which network architecture to use (mine or one from https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail/blob/master/a2c_ppo_acktr/model.py#L176)
     parser.add_argument("--stack", default=4, type=int)                 # frames to stack together as input
+    parser.add_argument("--img_width", default=32, type=int)            # size of frames
 
     args = parser.parse_args()
     args.save_models = not args.no_save_models
@@ -126,8 +126,8 @@ if __name__ == "__main__":
     # add a Monitor and log the command-line options
     log_dir = "results/{}/".format(args.name)
     os.makedirs(log_dir, exist_ok=True)
-    env = PixelObservationWrapper(env)
-    env = bench.Monitor(env, log_dir, allow_early_resets=True)
+    env = PixelObservationWrapper(env, stack=args.stack, img_width=args.img_width)
+    # env = bench.Monitor(env, log_dir, allow_early_resets=True)
     utils.write_options(args, log_dir)
 
     state_dim = env.observation_space.shape[0]
@@ -137,7 +137,7 @@ if __name__ == "__main__":
     # Initialize policy
     if args.policy_name == "TD3": 
         policy = TD3_pixels.TD3Pixels(state_dim, action_dim, max_action, 
-                arch=args.arch, initialize=args.init, img_width=IMG_SIZE, stack=args.stack)
+                arch=args.arch, initialize=args.init, img_width=args.img_width, stack=args.stack)
     elif args.policy_name == "OurDDPG": policy = OurDDPG.DDPG(state_dim, action_dim, max_action)
     elif args.policy_name == "DDPG": policy = DDPG.DDPG(state_dim, action_dim, max_action)
     policy.mode('eval')

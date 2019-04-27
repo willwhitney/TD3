@@ -9,7 +9,7 @@ if not os.path.exists("slurm_logs"):
     os.makedirs("slurm_logs")
 if not os.path.exists("slurm_scripts"):
     os.makedirs("slurm_scripts")
-code_dir = '/private/home/willwhitney/code'
+code_dir = '/misc/vlgscratch4/FergusGroup/wwhitney'
 
 # basename = "PFnew_start_traj1"
 # grids = [
@@ -237,7 +237,7 @@ code_dir = '/private/home/willwhitney/code'
 #     },
 # ]
 
-basename = "PRV128r32_stack4_embed"
+basename = "PRV128r64_stack4_embed_t3"
 grids = [
     # raw
     {
@@ -248,7 +248,9 @@ grids = [
         # "arch": ['mine_bn', 'ilya_bn'],
         # "arch": ['minev2_bn', 'minev3_bn'],
         "arch": ['mine_bn', 'minev2_bn', 'minev3_bn', 'minev4_bn'],
-        "init": [True, False],
+        "init": [False],
+        "stack": [4],
+        "img_width": [64],
 
         "decoder": ["nocollide_step001_gear200_white_qvel"],
 
@@ -337,12 +339,15 @@ for job in jobs:
         os.makedirs(job_source_dir)
         os.system('cp *.py ' + job_source_dir)
         os.system('cp -R reacher_family ' + job_source_dir)
+        os.system('cp -R pointmass ' + job_source_dir)
     except FileExistsError:
         # with the 'clear' flag, we're starting fresh
         # overwrite the code that's already here
         if clear:
             print("Overwriting existing files.")
             os.system('cp *.py ' + job_source_dir)
+            os.system('cp -R reacher_family ' + job_source_dir)
+            os.system('cp -R pointmass ' + job_source_dir)
 
     jobcommand = "python {}/{}.py{}".format(job_source_dir, job['main_file'], flagstring)
 
@@ -358,23 +363,23 @@ for job in jobs:
                         jobname + ".out\n")
         slurmfile.write("#SBATCH --error=slurm_logs/" + jobname + ".err\n")
         slurmfile.write("#SBATCH --export=ALL\n")
-        slurmfile.write("#SBATCH --signal=USR1@600\n")
+        # slurmfile.write("#SBATCH --signal=USR1@600\n")
         # slurmfile.write("#SBATCH --time=0-02\n")
         # slurmfile.write("#SBATCH --time=0-12\n")
         slurmfile.write("#SBATCH --time=1-00\n")
         # slurmfile.write("#SBATCH -p dev\n")
         # slurmfile.write("#SBATCH -p uninterrupted,dev\n")
         # slurmfile.write("#SBATCH -p uninterrupted\n")
-        slurmfile.write("#SBATCH -p dev,uninterrupted,priority\n")
-        slurmfile.write("#SBATCH --comment='contract end 4/24'\n")
+        # slurmfile.write("#SBATCH -p dev,uninterrupted,priority\n")
+        # slurmfile.write("#SBATCH --comment='contract end 4/24'\n")
         slurmfile.write("#SBATCH -N 1\n")
-        slurmfile.write("#SBATCH --mem=128gb\n")
+        slurmfile.write("#SBATCH --mem=32gb\n")
 
         slurmfile.write("#SBATCH -c 4\n")
         slurmfile.write("#SBATCH --gres=gpu:1\n")
 
         # slurmfile.write("#SBATCH -c 40\n")
-        # slurmfile.write("#SBATCH --constraint=pascal\n")
+        slurmfile.write("#SBATCH --constraint=gpu_12gb\n")
 
         slurmfile.write("cd " + true_source_dir + '\n')
         slurmfile.write("srun " + jobcommand)

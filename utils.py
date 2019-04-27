@@ -3,7 +3,9 @@ import copy
 import json
 import imageio
 import math
+import os
 import functools
+import torch
 from torch import nn
 from torch.utils.data import Dataset
 
@@ -103,6 +105,30 @@ class ReplayDataset(Dataset):
             data[2].astype('float32'),
             data[3],
             data[4]))
+
+    def save(self, path):
+        os.makedirs(path, exist_ok=True)
+
+        stacked_arrays = [np.stack([d[i] for d in self.storage]) for i in range(5)]
+        manifest = {
+            'type': 'float32',
+            'shapes': [array.shape for array in stacked_arrays]
+        }
+        torch.save(manifest, "{}/manifest.pt".format(path))
+
+        saved_arrays = [np.memmap("{}/{}.npmm".format(path, i), dtype='float32', mode='write', shape=stacked_arrays[i].shape) 
+                        for i in range(5)]
+        for saved_array, stacked_array in zip(saved_arrays, stacked_arrays):
+            saved_array[:] = stacked_array[:]
+            saved_array.flush()
+
+    def load(self, path):
+        manifest = torch.load("{}/manifest.pt".format(path))
+        saved_arrays = [np.memmap("{}/{}.npmm".format(path, i), mode='r', dtype=manifest['type'], shape=manifest['shapes'][i]) 
+                        for i in range(5)]
+        self.storage = [tuple((np.array(saved_array[i]) for saved_array in saved_arrays))
+                        for i in range(saved_arrays[0].shape[0])]
+        self.storage = list(self.storage)
 
     def __len__(self):
         return len(self.storage)
