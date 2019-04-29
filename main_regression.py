@@ -227,5 +227,7 @@ if __name__ == "__main__":
         run_epoch(model, loader, train=True)
         run_epoch(model, eval_loader, train=False)
         print()
+        if epoch % 10 == 0: torch.save(model, log_dir + "regress.pt")
+
     torch.save(model, log_dir + "regress.pt")
 

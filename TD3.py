@@ -27,6 +27,7 @@ class Actor(nn.Module):
         x = F.relu(self.l1(x))
         x = F.relu(self.l2(x))
         x = self.max_action * torch.tanh(self.l3(x))
+        print(x)
         return x
 
 

@@ -148,7 +148,7 @@ class Actor(nn.Module):
                 nn.Linear(200, action_dim),
             ])
 
-        if init: ddpg_init(self.conv_layers, self.lin_layers)
+        if initialize: ddpg_init(self.conv_layers, self.lin_layers)
 
         # self.max_action = max_action * 2
         self.max_action = max_action
@@ -156,13 +156,14 @@ class Actor(nn.Module):
 
     def forward(self, x):
         for layer in self.conv_layers:
-            x = F.relu(layer(x))
+            x = layer(x)
+            if isinstance(layer, nn.Conv2d): x = F.relu(x)
 
         x = x.view(-1, self.conv_output_dim)
 
         for i, layer in enumerate(self.lin_layers):
             x = layer(x)
-            if i < (len(self.lin_layers) - 1): x = F.relu(x)
+            if i < (len(self.lin_layers) - 1) and isinstance(layer, nn.Linear): x = F.relu(x)
 
         x = self.max_action * torch.tanh(x)
         return x
@@ -188,7 +189,7 @@ class Critic(nn.Module):
             nn.Linear(200, 1),
         ])
 
-        if init:
+        if initialize:
             ddpg_init(self.q1_conv_layers, self.q1_lin_layers)
             ddpg_init(self.q2_conv_layers, self.q2_lin_layers)
 
@@ -199,26 +200,28 @@ class Critic(nn.Module):
 
     def Q1(self, x, u, i):
         for layer in self.q1_conv_layers:
-            x = F.relu(layer(x))
+            x = layer(x)
+            if isinstance(layer, nn.Conv2d): x = F.relu(x)
 
         # import ipdb; ipdb.set_trace()
         x = x.view(-1, self.conv_output_dim)
         x = torch.cat([x, u, i], dim=1)
         for i, layer in enumerate(self.q1_lin_layers):
             x = layer(x)
-            if i < (len(self.q1_lin_layers) - 1): x = F.relu(x)
+            if i < (len(self.q1_lin_layers) - 1) and isinstance(layer, nn.Linear): x = F.relu(x)
         
         return x
 
     def Q2(self, x, u, i):
         for layer in self.q2_conv_layers:
-            x = F.relu(layer(x))
+            x = layer(x)
+            if isinstance(layer, nn.Conv2d): x = F.relu(x)
 
         x = x.view(-1, self.conv_output_dim)
         x = torch.cat([x, u, i], dim=1)
         for i, layer in enumerate(self.q2_lin_layers):
             x = layer(x)
-            if i < (len(self.q2_lin_layers) - 1): x = F.relu(x)
+            if i < (len(self.q2_lin_layers) - 1) and isinstance(layer, nn.Linear): x = F.relu(x)
         
         return x
 
@@ -354,104 +357,107 @@ class EmbeddedTD3Pixels(object):
         # batch_size = min(batch_size, len(replay_buffer))
         traj_len = self.decoder.traj_len
         loader = DataLoader(replay_buffer, batch_size, shuffle=True, num_workers=0) #, collate_fn=default_collate)
-        for it, batch in enumerate(loader):
-            if it >= iterations: break
-            state, next_state, action, e_action, plan_step, reward, done = batch
-            batch_size = state.size(0)
-            # import ipdb; ipdb.set_trace()
-            
-            state = state.to(device)
-            next_state = next_state.to(device)
-            action = action.to(device)
-            e_action = e_action.to(device)
-            plan_step = plan_step.float().to(device)
-            reward = reward.float().to(device)
-            done = (1 - done).float().to(device)
-
-            noise = torch.FloatTensor(batch_size, self.e_action_dim).data.normal_(0, policy_noise).to(device)
-            noise = noise.clamp(-noise_clip, noise_clip)
-
-
-            # remaining_plan_steps = k - i
-            remaining_plan_steps = traj_len - plan_step[:, 0]
-
-            # create a mask indicating whether the action at index was from the plan at index 0
-            same_plan_mask = torch.zeros(plan_step.size()).to(device)
-            for index in range(batch_size):
+        it = 0
+        while it < iterations:
+            for batch in loader:
+                it += 1
+                if it >= iterations: break
+                state, next_state, action, e_action, plan_step, reward, done = batch
+                batch_size = state.size(0)
                 # import ipdb; ipdb.set_trace()
-                same_plan_mask[index][:int(remaining_plan_steps[index])] = 1
+                
+                state = state.to(device)
+                next_state = next_state.to(device)
+                action = action.to(device)
+                e_action = e_action.to(device)
+                plan_step = plan_step.float().to(device)
+                reward = reward.float().to(device)
+                done = (1 - done).float().to(device)
 
-            # indicates whether the reward at time t is from the same episode as state[:, 0]
-            same_episode_mask = torch.zeros(plan_step.size()).to(device)
-            same_episode_mask[:, 0] = 1
-            for t in range(1, traj_len):
-                same_episode_mask[:, t] = same_episode_mask[:, t-1] * done[:, t-1]
+                noise = torch.FloatTensor(batch_size, self.e_action_dim).data.normal_(0, policy_noise).to(device)
+                noise = noise.clamp(-noise_clip, noise_clip)
 
-            # \sum_{j=0}^{k-1} \gamma^j r_{t+j}
-            discount_exponent = torch.linspace(0, traj_len-1, traj_len).repeat(state.size(0), 1).to(device)
-            discount_factor = discount ** discount_exponent
-            discounted_reward = reward * discount_factor
-            # current_plan_reward = (discounted_reward * same_plan_mask).sum(1, keepdim=True)
-            current_plan_reward = (discounted_reward * same_plan_mask * same_episode_mask).sum(1, keepdim=True)
 
-            # find which state we next replan on
-            # if there are 4 steps left in the plan, that means we replanned
-            #   on the state we got to after the 4th action (action[3])
-            # that is, we replan on next_state[3]
-            next_plan_state = torch.Tensor(batch_size, *next_state.size()[2:]).to(device)
-            for index in range(batch_size):
+                # remaining_plan_steps = k - i
+                remaining_plan_steps = traj_len - plan_step[:, 0]
+
+                # create a mask indicating whether the action at index was from the plan at index 0
+                same_plan_mask = torch.zeros(plan_step.size()).to(device)
+                for index in range(batch_size):
+                    # import ipdb; ipdb.set_trace()
+                    same_plan_mask[index][:int(remaining_plan_steps[index])] = 1
+
+                # indicates whether the reward at time t is from the same episode as state[:, 0]
+                same_episode_mask = torch.zeros(plan_step.size()).to(device)
+                same_episode_mask[:, 0] = 1
+                for t in range(1, traj_len):
+                    same_episode_mask[:, t] = same_episode_mask[:, t-1] * done[:, t-1]
+
+                # \sum_{j=0}^{k-1} \gamma^j r_{t+j}
+                discount_exponent = torch.linspace(0, traj_len-1, traj_len).repeat(state.size(0), 1).to(device)
+                discount_factor = discount ** discount_exponent
+                discounted_reward = reward * discount_factor
+                # current_plan_reward = (discounted_reward * same_plan_mask).sum(1, keepdim=True)
+                current_plan_reward = (discounted_reward * same_plan_mask * same_episode_mask).sum(1, keepdim=True)
+
+                # find which state we next replan on
+                # if there are 4 steps left in the plan, that means we replanned
+                #   on the state we got to after the 4th action (action[3])
+                # that is, we replan on next_state[3]
+                next_plan_state = torch.Tensor(batch_size, *next_state.size()[2:]).to(device)
+                for index in range(batch_size):
+                    # import ipdb; ipdb.set_trace()
+                    next_plan_state[index] = next_state[index, int(remaining_plan_steps[index]) - 1]
+
+                # Select action according to policy and add clipped noise
+                # note this is now an embedded action
+                # noise = torch.FloatTensor(batch_size, self.e_action_dim).data.normal_(0, policy_noise).to(device)
+                # noise = noise.clamp(-noise_clip, noise_clip)
+                next_action = (self.actor_target(next_plan_state) + noise).clamp(-self.max_e_action, self.max_e_action)
+
+                # make a new done mask that is 0 if the episode ended during the current plan
+                done_mask = torch.zeros(batch_size, 1).to(device)
+                for index in range(batch_size):
+                    done_mask[index] = done[index, :int(remaining_plan_steps[index])].prod()
+
+                # Compute the target Q value
+                # tell the target Q functions that we're on a new plan in this state
                 # import ipdb; ipdb.set_trace()
-                next_plan_state[index] = next_state[index, int(remaining_plan_steps[index]) - 1]
+                target_Q1, target_Q2 = self.critic_target(next_plan_state, next_action, torch.zeros(batch_size, 1).to(device))
+                target_Q = torch.min(target_Q1, target_Q2)
+                next_state_discount = discount ** remaining_plan_steps.unsqueeze(1)
+                target_Q = current_plan_reward + (done_mask * next_state_discount * target_Q).detach()
 
-            # Select action according to policy and add clipped noise
-            # note this is now an embedded action
-            # noise = torch.FloatTensor(batch_size, self.e_action_dim).data.normal_(0, policy_noise).to(device)
-            # noise = noise.clamp(-noise_clip, noise_clip)
-            next_action = (self.actor_target(next_plan_state) + noise).clamp(-self.max_e_action, self.max_e_action)
-
-            # make a new done mask that is 0 if the episode ended during the current plan
-            done_mask = torch.zeros(batch_size, 1).to(device)
-            for index in range(batch_size):
-                done_mask[index] = done[index, :int(remaining_plan_steps[index])].prod()
-
-            # Compute the target Q value
-            # tell the target Q functions that we're on a new plan in this state
-            # import ipdb; ipdb.set_trace()
-            target_Q1, target_Q2 = self.critic_target(next_plan_state, next_action, torch.zeros(batch_size, 1).to(device))
-            target_Q = torch.min(target_Q1, target_Q2)
-            next_state_discount = discount ** remaining_plan_steps.unsqueeze(1)
-            target_Q = current_plan_reward + (done_mask * next_state_discount * target_Q).detach()
-
-            # Get current Q estimates
-            current_Q1, current_Q2 = self.critic(state[:, 0], e_action[:, 0], plan_step[:, 0].unsqueeze(1))
-            target_Q = target_Q.reshape(-1, 1)
-            # import ipdb; ipdb.set_trace()
-            critic_loss = F.mse_loss(current_Q1, target_Q) + F.mse_loss(current_Q2, target_Q)
-
-            # Optimize the critic
-            self.critic_optimizer.zero_grad()
-            critic_loss.backward()
-            self.critic_optimizer.step()
-
-            # Delayed policy updates
-            if it % policy_freq == 0:
-                # Compute actor loss
-                # If I was in this state, and I started following plan actor(state) right now, how would I do?
+                # Get current Q estimates
+                current_Q1, current_Q2 = self.critic(state[:, 0], e_action[:, 0], plan_step[:, 0].unsqueeze(1))
+                target_Q = target_Q.reshape(-1, 1)
                 # import ipdb; ipdb.set_trace()
-                actor_loss = -self.critic.Q1(state[:, 0], self.actor(state[:, 0]), torch.zeros(batch_size, 1).to(device)).mean()
-                # import ipdb; ipdb.set_trace()
+                critic_loss = F.mse_loss(current_Q1, target_Q) + F.mse_loss(current_Q2, target_Q)
 
-                # Optimize the actor
-                self.actor_optimizer.zero_grad()
-                actor_loss.backward()
-                self.actor_optimizer.step()
+                # Optimize the critic
+                self.critic_optimizer.zero_grad()
+                critic_loss.backward()
+                self.critic_optimizer.step()
 
-                # Update the frozen target models
-                for param, target_param in zip(self.critic.parameters(), self.critic_target.parameters()):
-                    target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
+                # Delayed policy updates
+                if it % policy_freq == 0:
+                    # Compute actor loss
+                    # If I was in this state, and I started following plan actor(state) right now, how would I do?
+                    # import ipdb; ipdb.set_trace()
+                    actor_loss = -self.critic.Q1(state[:, 0], self.actor(state[:, 0]), torch.zeros(batch_size, 1).to(device)).mean()
+                    # import ipdb; ipdb.set_trace()
 
-                for param, target_param in zip(self.actor.parameters(), self.actor_target.parameters()):
-                    target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
+                    # Optimize the actor
+                    self.actor_optimizer.zero_grad()
+                    actor_loss.backward()
+                    self.actor_optimizer.step()
+
+                    # Update the frozen target models
+                    for param, target_param in zip(self.critic.parameters(), self.critic_target.parameters()):
+                        target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
+
+                    for param, target_param in zip(self.actor.parameters(), self.actor_target.parameters()):
+                        target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
 
         self.mode('eval')
 

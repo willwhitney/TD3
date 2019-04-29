@@ -132,11 +132,11 @@ class ReplayDataset(Dataset):
 
     def __len__(self):
         return len(self.storage)
+        # return int(self.max_size)
 
     def __getitem__(self, i):
-        # for r in self.storage[i]: print(r.shape)
-        # import ipdb; ipdb.set_trace()
         return self.storage[i]
+        # return self.storage[i % len(self.storage)]
 
 
 class EmbeddedReplayDataset(Dataset):

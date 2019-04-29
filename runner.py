@@ -237,32 +237,32 @@ code_dir = '/misc/vlgscratch4/FergusGroup/wwhitney'
 #     },
 # ]
 
-basename = "PRV128r64_stack4_embed_t3"
-grids = [
-    # raw
-    {
-        "main_file": ['main_embedded_pixels'],
-        "env_name": [
-            'ReacherVertical-v2',
-        ],
-        # "arch": ['mine_bn', 'ilya_bn'],
-        # "arch": ['minev2_bn', 'minev3_bn'],
-        "arch": ['mine_bn', 'minev2_bn', 'minev3_bn', 'minev4_bn'],
-        "init": [False],
-        "stack": [4],
-        "img_width": [64],
+# basename = "PRV128r64_stack4_embed_t3"
+# grids = [
+#     # raw
+#     {
+#         "main_file": ['main_embedded_pixels'],
+#         "env_name": [
+#             'ReacherVertical-v2',
+#         ],
+#         # "arch": ['mine_bn', 'ilya_bn'],
+#         # "arch": ['minev2_bn', 'minev3_bn'],
+#         "arch": ['mine_bn', 'minev2_bn', 'minev3_bn', 'minev4_bn'],
+#         "init": [False],
+#         "stack": [4],
+#         "img_width": [64],
 
-        "decoder": ["nocollide_step001_gear200_white_qvel"],
+#         "decoder": ["nocollide_step001_gear200_white_qvel"],
 
-        # "start_timesteps": [0],
-        "max_timesteps": [1e7],
-        "eval_freq": [1e3],
-        "render_freq": [1e4],
-        "seed": list(range(4)),
-    },
-]
+#         # "start_timesteps": [0],
+#         "max_timesteps": [1e7],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e4],
+#         "seed": list(range(4)),
+#     },
+# ]
 
-# basename = "PRV128_norm_take3"
+# basename = "PRV256_64_fixes"
 # grids = [
 #     # raw
 #     {
@@ -271,15 +271,44 @@ grids = [
 #             'ReacherVertical-v2',
 #         ],
 #         "arch": ['mine', 'mine_bn', 'ilya', 'ilya_bn'],
-#         "init": [True],
+#         "init": [False],
+#         "stack": [4],
+#         "img_width": [64],
 
-#         # "start_timesteps": [0],
+#         "start_timesteps": [0],
 #         "max_timesteps": [1e6],
 #         "eval_freq": [1e3],
 #         "render_freq": [1e4],
 #         "seed": list(range(4)),
 #     },
 # ]
+
+basename = "PRV256d1_actrepeat_extrawide_t2"
+grids = [
+    # raw
+    {
+        "main_file": ['main_dummy_pixels'],
+        "env_name": [
+            'ReacherVertical-v2',
+        ],
+        "arch": [
+            'lin1_extrawide', 
+            'lin2_extrawide', 
+            'lin3_extrawide', 
+            # 'conv1_1_wide', 
+            # 'conv2_1_wide'
+        ],
+        "init": [False],
+        "stack": [4],
+        "img_width": [1],
+
+        "start_timesteps": [0],
+        "max_timesteps": [1e6],
+        "eval_freq": [1e3],
+        "render_freq": [1e10],
+        "seed": list(range(4)),
+    },
+]
 
 
 
