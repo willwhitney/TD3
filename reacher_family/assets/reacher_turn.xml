@@ -12,7 +12,9 @@
 		<geom conaffinity="0" fromto=" .3 -.3 .01 .3  .3 .01" name="sideE" rgba="0.9 0.4 0.6 1" size=".02" type="capsule"/>
 		<geom conaffinity="0" fromto="-.3  .3 .01 .3  .3 .01" name="sideN" rgba="0.9 0.4 0.6 1" size=".02" type="capsule"/>
 		<geom conaffinity="0" fromto="-.3 -.3 .01 -.3 .3 .01" name="sideW" rgba="0.9 0.4 0.6 1" size=".02" type="capsule"/> -->
-		<light name="light" directional="true" diffuse=".6 .6 .6" pos="0 0 1" specular=".3 .3 .3"/>
+		<light name="light" directional="true" diffuse=".6 .6 .6" pos="0 -0.5 1" mode="targetbody" target="body0" specular=".3 .3 .3"/>
+		<camera name="track" mode="targetbody" pos="0 -1 0.45" target="body0" fovy="58" ipd="0.068"/>
+
 		<geom name="floor" type="plane" pos="0 0 0" size=".4 .2 10"/>
 		<geom name="wall1" type="plane" pos="-.682843 0 .282843" size=".4 .2 10" zaxis="1 0 1"/>
 		<geom name="wall2" type="plane" pos=".682843 0 .282843" size=".4 .2 10" zaxis="-1 0 1"/>
