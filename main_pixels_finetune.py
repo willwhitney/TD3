@@ -5,7 +5,6 @@ import argparse
 import os
 from baselines import bench
 import sys
-import time
 import skimage.transform
 
 import utils
@@ -25,23 +24,12 @@ def evaluate_policy(policy, eval_episodes=10):
     avg_reward = 0.
     for episode in range(eval_episodes):
         obs = env.reset()
-
-        frame_obs = np.zeros([3 * args.stack, args.img_width, args.img_width])
-        for i, v in enumerate(obs): frame_obs[i] = v
-        obs = frame_obs
-
-
         policy.reset()
         done = False
         while not done:
             action = policy.select_action(obs)
             # import ipdb; ipdb.set_trace()
             obs, reward, done, _ = env.step(action)
-
-            frame_obs = np.zeros([3 * args.stack, args.img_width, args.img_width])
-            for i, v in enumerate(obs): frame_obs[i] = v
-            obs = frame_obs
-
             avg_reward += reward
 
     avg_reward /= eval_episodes
@@ -57,22 +45,12 @@ def render_policy(policy, log_dir, total_timesteps, eval_episodes=5):
         obs = env.reset()
         policy.reset()
 
-        frame_obs = np.zeros([3 * args.stack, args.img_width, args.img_width])
-        for i, v in enumerate(obs): frame_obs[i] = v
-        obs = frame_obs
-
-
         frame = env.render_obs(color_last=True) * 255
         frames.append(frame)
         done = False
         while not done:
             action = policy.select_action(obs)
             obs, reward, done, _ = env.step(action)
-
-            frame_obs = np.zeros([3 * args.stack, args.img_width, args.img_width])
-            for i, v in enumerate(obs): frame_obs[i] = v
-            obs = frame_obs
-
             frame = env.render_obs(color_last=True) * 255
 
             frame[:, :, 1] = (frame[:, :, 1].astype(float) + reward * 100).clip(0, 255)
@@ -149,7 +127,7 @@ if __name__ == "__main__":
     # add a Monitor and log the command-line options
     log_dir = "results/{}/".format(args.name)
     os.makedirs(log_dir, exist_ok=True)
-    # env = PixelObservationWrapper(env, stack=args.stack, img_width=args.img_width)
+    env = PixelObservationWrapper(env, stack=args.stack, img_width=args.img_width)
     # env = bench.Monitor(env, log_dir, allow_early_resets=True)
     utils.write_options(args, log_dir)
 
@@ -164,6 +142,16 @@ if __name__ == "__main__":
                 stack=args.stack, ddpglr=args.ddpglr)
     elif args.policy_name == "OurDDPG": policy = OurDDPG.DDPG(state_dim, action_dim, max_action)
     elif args.policy_name == "DDPG": policy = DDPG.DDPG(state_dim, action_dim, max_action)
+
+    from main_regression import StateRegressor
+    regressor = torch.load('results/reg_RV_dcgan_32/regress.pt').cuda()
+    conv_state = regressor.conv_layers.state_dict()
+    policy.actor.conv_layers.load_state_dict(conv_state)
+    policy.actor_target.conv_layers.load_state_dict(conv_state)
+    policy.critic.q1_conv_layers.load_state_dict(conv_state)
+    policy.critic.q2_conv_layers.load_state_dict(conv_state)
+    policy.critic_target.q1_conv_layers.load_state_dict(conv_state)
+    policy.critic_target.q2_conv_layers.load_state_dict(conv_state)
     policy.mode('eval')
 
     # replay_buffer = utils.ReplayBuffer(max_size=args.replay_size)
@@ -184,20 +172,17 @@ if __name__ == "__main__":
 
             if total_timesteps != 0:
                 print("Total T: %d Episode Num: %d Episode T: %d Reward: %f" % (total_timesteps, episode_num, episode_timesteps, episode_reward))
-                # start = time.time()
                 if args.policy_name == "TD3":
                     policy.train(replay_buffer, episode_timesteps, args.batch_size, args.discount, args.tau, args.policy_noise, args.noise_clip, args.policy_freq)
                 else:
                     policy.train(replay_buffer, episode_timesteps, args.batch_size, args.discount, args.tau)
-                # end = time.time()
-                # print("Train time: {:.3f}s".format(end - start))
 
             # Evaluate episode
             if timesteps_since_eval >= args.eval_freq:
                 timesteps_since_eval %= args.eval_freq
                 evaluations.append((episode_num, total_timesteps, evaluate_policy(policy)))
 
-                # if args.save_models: policy.save("policy", directory=log_dir)
+                if args.save_models: policy.save("policy", directory=log_dir)
                 np.save("{}/eval.npy".format(log_dir), np.stack(evaluations))
 
             if timesteps_since_render >= args.render_freq:
@@ -206,12 +191,6 @@ if __name__ == "__main__":
 
             # Reset environment
             obs = env.reset()
-
-            frame_obs = np.zeros([3 * args.stack, args.img_width, args.img_width])
-            for i, v in enumerate(obs): frame_obs[i] = v
-            # import ipdb; ipdb.set_trace()
-            obs = frame_obs
-            
             policy.reset()
             done = False
             episode_reward = 0
@@ -228,11 +207,6 @@ if __name__ == "__main__":
 
         # Perform action
         new_obs, reward, done, _ = env.step(action)
-
-        frame_obs = np.zeros([3 * args.stack, args.img_width, args.img_width])
-        for i, v in enumerate(new_obs): frame_obs[i] = v
-        new_obs = frame_obs
-
         done_bool = 0 if episode_timesteps + 1 == env_max_steps else float(done)
         episode_reward += reward
 
@@ -250,4 +224,4 @@ if __name__ == "__main__":
     evaluations.append((episode_num, total_timesteps, evaluate_policy(policy)))
     np.save("{}/eval.npy".format(log_dir), np.stack(evaluations))
     render_policy(policy, log_dir, total_timesteps)
-    # if args.save_models: policy.save("policy", directory=log_dir)
+    if args.save_models: policy.save("policy", directory=log_dir)

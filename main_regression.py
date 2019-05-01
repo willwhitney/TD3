@@ -223,7 +223,7 @@ if __name__ == "__main__":
     loader = DataLoader(replay_buffer, num_workers=1, shuffle=True, batch_size=args.batch_size, drop_last=True)
     eval_loader = DataLoader(eval_replay_buffer, num_workers=1, shuffle=True, batch_size=args.batch_size, drop_last=True)
 
-    for epoch in range(200):
+    for epoch in range(100):
         run_epoch(model, loader, train=True)
         run_epoch(model, eval_loader, train=False)
         print()

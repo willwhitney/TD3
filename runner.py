@@ -283,24 +283,76 @@ code_dir = '/misc/vlgscratch4/FergusGroup/wwhitney'
 #     },
 # ]
 
-basename = "PRV256d1_actrepeat_extrawide_t2"
+# basename = "PRV256d32_actrepeat_ddpglrnodecay"
+# grids = [
+#     # raw
+#     {
+#         "main_file": ['main_dummy_pixels'],
+#         "env_name": [
+#             'ReacherVertical-v2',
+#         ],
+#         "arch": [
+#             'dcgan_bn',
+#             # 'dcgandeep_bn',
+#             'mine_bn',
+#             # 'lin1_extrawide', 
+#             # 'lin2_extrawide', 
+#             # 'lin3_extrawide', 
+#             # 'conv1_1_wide', 
+#             # 'conv2_1_wide'
+#         ],
+#         "init": [False],
+#         "ddpglr": [True],
+#         "stack": [4],
+#         "img_width": [32],
+
+#         "start_timesteps": [0],
+#         "max_timesteps": [1e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e10],
+#         "seed": list(range(4)),
+#     },
+# ]
+
+# basename = "PRV256r32_finetune"
+# grids = [
+#     # raw
+#     {
+#         "main_file": ['main_pixels_finetune'],
+#         "env_name": [
+#             'ReacherVertical-v2',
+#         ],
+#         "arch": [
+#             'dcgan_bn',
+#             # 'lin1_extrawide', 
+#             # 'lin2_extrawide', 
+#             # 'lin3_extrawide', 
+#             # 'conv1_1_wide', 
+#             # 'conv2_1_wide'
+#         ],
+#         "init": [False],
+#         "stack": [4],
+#         "img_width": [32],
+
+#         "start_timesteps": [0],
+#         "max_timesteps": [1e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e10],
+#         "seed": list(range(4)),
+#     },
+# ]
+
+basename = "PRV256r64_reg"
 grids = [
     # raw
     {
-        "main_file": ['main_dummy_pixels'],
+        "main_file": ['main_pixels_regression'],
         "env_name": [
             'ReacherVertical-v2',
         ],
-        "arch": [
-            'lin1_extrawide', 
-            'lin2_extrawide', 
-            'lin3_extrawide', 
-            # 'conv1_1_wide', 
-            # 'conv2_1_wide'
-        ],
-        "init": [False],
+
         "stack": [4],
-        "img_width": [1],
+        "img_width": [64],
 
         "start_timesteps": [0],
         "max_timesteps": [1e6],
@@ -309,7 +361,6 @@ grids = [
         "seed": list(range(4)),
     },
 ]
-
 
 
 jobs = []

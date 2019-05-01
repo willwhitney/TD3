@@ -293,8 +293,25 @@ def build_conv(arch, img_width, stack=3):
             nn.Conv2d(32, 64, 4, stride=2, padding=1),
             nn.BatchNorm2d(64),
             nn.Conv2d(64, 128, 4, stride=2, padding=1),
-            nn.BatchNorm2d(32),
+            nn.BatchNorm2d(128),
             nn.Conv2d(128, 256, 4, stride=2, padding=1),
+            # nn.BatchNorm2d(256),
+            # nn.Conv2d(256, 512, 4, stride=2, padding=1),
+        ])
+
+    elif arch == "dcgandeep_bn":
+        conv_layers = nn.ModuleList([
+            nn.Conv2d(stack * 3, 32, 4, stride=2, padding=1),
+            nn.BatchNorm2d(32),
+            nn.Conv2d(32, 64, 4, stride=2, padding=1),
+            nn.BatchNorm2d(64),
+            nn.Conv2d(64, 128, 4, stride=2, padding=1),
+            nn.BatchNorm2d(128),
+            nn.Conv2d(128, 256, 4, stride=2, padding=1),
+            nn.BatchNorm2d(256),
+            nn.Conv2d(256, 256, 4, stride=2, padding=1),
+            nn.BatchNorm2d(256),
+            nn.Conv2d(256, 256, 4, stride=2, padding=1),
         ])
 
     conv_output_dim = utils.prod(utils.conv_list_out_dim(conv_layers, img_width, img_width))
@@ -354,7 +371,7 @@ class Actor(nn.Module):
                 x = F.relu(x)
 
         x = self.max_action * torch.tanh(x)
-        # print(x)
+        # if x.size(0) > 1: print("Action: {:.3f}".format(x.abs().mean().item()))
         return x
 
 
@@ -394,7 +411,7 @@ class Critic(nn.Module):
             if isinstance(layer, nn.Conv2d) or isinstance(layer, nn.Linear): x = F.relu(x)
 
         x = x.view(-1, self.conv_output_dim)
-        # print(x.abs().mean())
+        # print("Q feature: {:.3f}".format(x.abs().mean().item()))
         # x = torch.cat([x, u], dim=1)
         x = torch.cat([x, u.repeat([1, self.action_repeat])], dim=1)
         for i, layer in enumerate(self.q1_lin_layers):
@@ -421,18 +438,22 @@ class Critic(nn.Module):
 
 
 class TD3Pixels(object):
-    def __init__(self, state_dim, action_dim, max_action, arch="mine", initialize=True, img_width=128, stack=4):
+    def __init__(self, state_dim, action_dim, max_action, arch="mine", initialize=True, img_width=128, stack=4, ddpglr=False):
         self.actor = Actor(action_dim, max_action, arch, initialize, img_width, stack).to(device)
         self.actor_target = Actor(action_dim, max_action, arch, initialize, img_width, stack).to(device)
         self.actor_target.load_state_dict(self.actor.state_dict())
-        self.actor_optimizer = torch.optim.Adam(self.actor.parameters())
-        # self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=1e-4)
+        if ddpglr:
+            self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=1e-4)
+        else:
+            self.actor_optimizer = torch.optim.Adam(self.actor.parameters())
 
         self.critic = Critic(action_dim, arch, initialize, img_width, stack).to(device)
         self.critic_target = Critic(action_dim, arch, initialize, img_width, stack).to(device)
         self.critic_target.load_state_dict(self.critic.state_dict())
-        self.critic_optimizer = torch.optim.Adam(self.critic.parameters())
-        # self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=1e-3, weight_decay=1e-2)
+        if ddpglr:
+            self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=1e-3)
+        else:
+            self.critic_optimizer = torch.optim.Adam(self.critic.parameters())
 
         print(self.actor)
         print(self.critic)
