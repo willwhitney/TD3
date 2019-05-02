@@ -8,7 +8,7 @@ import sys
 import skimage.transform
 
 import utils
-import TD3_pixels
+import TD3
 import OurDDPG
 import DDPG
 from pixel_wrapper import PixelObservationWrapper
@@ -19,17 +19,26 @@ from pointmass import point_mass
 
 import reacher_family
 
+def regress(obs):
+    with torch.no_grad():
+        obs = torch.tensor(obs).float().unsqueeze(0).cuda()
+        regressed_obs = regressor(obs)[0].cpu().numpy()
+    return regressed_obs
+
+
 # Runs policy for X episodes and returns average reward
 def evaluate_policy(policy, eval_episodes=10):
     avg_reward = 0.
     for episode in range(eval_episodes):
         obs = env.reset()
+        obs = regress(obs)
         policy.reset()
         done = False
         while not done:
             action = policy.select_action(obs)
             # import ipdb; ipdb.set_trace()
             obs, reward, done, _ = env.step(action)
+            obs = regress(obs)
             avg_reward += reward
 
     avg_reward /= eval_episodes
@@ -43,6 +52,7 @@ def render_policy(policy, log_dir, total_timesteps, eval_episodes=5):
     frames = []
     for episode in range(eval_episodes):
         obs = env.reset()
+        obs = regress(obs)
         policy.reset()
 
         frame = env.render_obs(color_last=True) * 255
@@ -51,6 +61,7 @@ def render_policy(policy, log_dir, total_timesteps, eval_episodes=5):
         while not done:
             action = policy.select_action(obs)
             obs, reward, done, _ = env.step(action)
+            obs = regress(obs)
             frame = env.render_obs(color_last=True) * 255
 
             frame[:, :, 1] = (frame[:, :, 1].astype(float) + reward * 100).clip(0, 255)
@@ -134,16 +145,16 @@ if __name__ == "__main__":
     action_dim = env.action_space.shape[0]
     max_action = float(env.action_space.high[0])
 
+    from main_regression import StateRegressor
+    regressor = torch.load('results/reg_RV_dcgan_64/regress.pt').cuda()
+    regressor.eval()
+
     # Initialize policy
-    if args.policy_name == "TD3": 
-        policy = TD3_pixels.TD3Pixels(state_dim, action_dim, max_action, 
-                arch=args.arch, initialize=args.init, img_width=args.img_width, stack=args.stack)
+    if args.policy_name == "TD3": policy = TD3.TD3(state_dim, action_dim, max_action)
     elif args.policy_name == "OurDDPG": policy = OurDDPG.DDPG(state_dim, action_dim, max_action)
     elif args.policy_name == "DDPG": policy = DDPG.DDPG(state_dim, action_dim, max_action)
-    policy.mode('eval')
 
-    # replay_buffer = utils.ReplayBuffer(max_size=args.replay_size)
-    replay_buffer = utils.ReplayDataset(max_size=args.replay_size)
+    replay_buffer = utils.ReplayBuffer(max_size=args.replay_size)
 
     # Evaluate untrained policy
     evaluations = [(0, 0, evaluate_policy(policy))]
@@ -179,6 +190,8 @@ if __name__ == "__main__":
 
             # Reset environment
             obs = env.reset()
+            obs = regress(obs)
+
             policy.reset()
             done = False
             episode_reward = 0
@@ -195,6 +208,8 @@ if __name__ == "__main__":
 
         # Perform action
         new_obs, reward, done, _ = env.step(action)
+        new_obs = regress(new_obs)
+
         done_bool = 0 if episode_timesteps + 1 == env_max_steps else float(done)
         episode_reward += reward
 

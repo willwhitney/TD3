@@ -86,6 +86,7 @@ if __name__ == "__main__":
     parser.add_argument("--render_freq", default=5e3, type=float)       # How often (time steps) we render
     
     parser.add_argument("--init", action="store_true")                  # use the initialization from DDPG for networks
+    parser.add_argument("--ddpglr", action="store_true")                # use the lr from DDPG for networks
     parser.add_argument("--arch", default="mine")                       # which network architecture to use (mine or one from https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail/blob/master/a2c_ppo_acktr/model.py#L176)
     parser.add_argument("--stack", default=4, type=int)                 # frames to stack together as input
     parser.add_argument("--img_width", default=32, type=int)            # size of frames
@@ -137,9 +138,20 @@ if __name__ == "__main__":
     # Initialize policy
     if args.policy_name == "TD3": 
         policy = TD3_pixels.TD3Pixels(state_dim, action_dim, max_action, 
-                arch=args.arch, initialize=args.init, img_width=args.img_width, stack=args.stack)
+                arch=args.arch, initialize=args.init, img_width=args.img_width, 
+                stack=args.stack, ddpglr=args.ddpglr)
     elif args.policy_name == "OurDDPG": policy = OurDDPG.DDPG(state_dim, action_dim, max_action)
     elif args.policy_name == "DDPG": policy = DDPG.DDPG(state_dim, action_dim, max_action)
+
+    from main_regression import StateRegressor
+    regressor = torch.load('results/reg_RV_dcgan_32/regress.pt').cuda()
+    conv_state = regressor.conv_layers.state_dict()
+    policy.actor.conv_layers.load_state_dict(conv_state)
+    policy.actor_target.conv_layers.load_state_dict(conv_state)
+    policy.critic.q1_conv_layers.load_state_dict(conv_state)
+    policy.critic.q2_conv_layers.load_state_dict(conv_state)
+    policy.critic_target.q1_conv_layers.load_state_dict(conv_state)
+    policy.critic_target.q2_conv_layers.load_state_dict(conv_state)
     policy.mode('eval')
 
     # replay_buffer = utils.ReplayBuffer(max_size=args.replay_size)

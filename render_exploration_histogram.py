@@ -3,7 +3,7 @@ import torch
 import gym
 import argparse
 import os
-from baselines import bench
+# from baselines import bench
 import sys
 import time
 
@@ -27,7 +27,7 @@ sys.path.insert(0, '../action-embedding')
 
 import reacher_family
 
-def render_exploration(env, policy, filename, eval_episodes=10, max_steps=1000, query_dim=0):
+def render_exploration(env, policy, filename, eval_episodes=10, max_steps=1000, query_dim=0, save=True):
     avg_reward = 0.
     uenv = env.unwrapped
     start_obs = env.reset()
@@ -77,11 +77,12 @@ def render_exploration(env, policy, filename, eval_episodes=10, max_steps=1000, 
         # x=alt.X('x', bin=alt.Bin(step=2), scale=alt.Scale(domain=[-60, 60])),
         # y=alt.Y('count()', scale=alt.Scale(domain=[0, 110]))
     ).interactive().properties(width=400, height=400)
-    hist.save("{}_hist.html".format(filename))
+    if save: hist.save("{}_hist.html".format(filename))
 
     data_np = np.array([d[1] for d in visited])
     data_hist, _ = np.histogram(data_np, bins=np.linspace(-0.25, 0.25, 100), density=True)
     print("Entropy of state distribution: ", scipy.stats.entropy(data_hist))
+    return hist
 
 
 def load_decoder(env_name, name):

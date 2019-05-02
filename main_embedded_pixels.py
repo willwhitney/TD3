@@ -10,7 +10,7 @@ import skimage.transform
 import utils
 from EmbeddedTD3_pixels import EmbeddedTD3Pixels
 from RandomEmbeddedPolicy import RandomEmbeddedPolicy
-from pixel_wrapper import PixelObservationWrapper, IMG_SIZE, INITIAL_IMG_SIZE
+from pixel_wrapper import PixelObservationWrapper
 from DummyDecoder import DummyDecoder
 
 # so it can find the action decoder class and LinearPointMass
@@ -44,8 +44,6 @@ def render_policy(policy, log_dir, total_timesteps, eval_episodes=5):
     for episode in range(eval_episodes):
         obs = env.reset()
         policy.reset()
-        # raw_frame = env.render(mode='rgb_array', width=INITIAL_IMG_SIZE, height=INITIAL_IMG_SIZE)
-        # frame = skimage.transform.resize(raw_frame, (IMG_SIZE, IMG_SIZE))*255
 
         frame = env.render_obs(color_last=True) * 255
         # import ipdb; ipdb.set_trace()
@@ -55,8 +53,6 @@ def render_policy(policy, log_dir, total_timesteps, eval_episodes=5):
         while not done:
             action, _, _ = policy.select_action(np.array(obs))
             obs, reward, done, _ = env.step(action)
-            # raw_frame = env.render(mode='rgb_array', width=INITIAL_IMG_SIZE, height=INITIAL_IMG_SIZE)
-            # frame = skimage.transform.resize(raw_frame, (IMG_SIZE, IMG_SIZE))*255
 
             frame = env.render_obs(color_last=True) * 255
 
@@ -71,7 +67,7 @@ def render_policy(policy, log_dir, total_timesteps, eval_episodes=5):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--name", default=None)                         # Job name
-    parser.add_argument("--policy_name", default="TD3")                 # Policy name
+    parser.add_argument("--policy_name", default="EmbeddedTD3")         # Policy name
     parser.add_argument("--env_name", default="Reacher-v2")             # OpenAI gym environment name
     parser.add_argument("--seed", default=0, type=int)                  # Sets Gym, PyTorch and Numpy seeds
     parser.add_argument("--start_timesteps", default=1e4, type=float)   # How many time steps purely random policy is run for
@@ -97,6 +93,8 @@ if __name__ == "__main__":
     parser.add_argument("--init", action="store_true")                  # use the initialization from DDPG for networks
     parser.add_argument("--arch", default="mine")                       # which network architecture to use (mine or one from https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail/blob/master/a2c_ppo_acktr/model.py#L176)
     parser.add_argument("--stack", default=4, type=int)                 # frames to stack together as input
+    parser.add_argument("--img_width", default=32, type=int)            # size of frames
+
     args = parser.parse_args()
     args.save_models = not args.no_save_models
 
@@ -133,7 +131,7 @@ if __name__ == "__main__":
     # add a Monitor and log the command-line options
     log_dir = "results/{}/".format(args.name)
     os.makedirs(log_dir, exist_ok=True)
-    env = PixelObservationWrapper(env)
+    env = PixelObservationWrapper(env, stack=args.stack, img_width=args.img_width)
     # env = bench.Monitor(env, log_dir, allow_early_resets=True)
     utils.write_options(args, log_dir)
 
@@ -164,7 +162,7 @@ if __name__ == "__main__":
     decoder.max_embedding = float(decoder.max_embedding)
 
     policy = EmbeddedTD3Pixels(state_dim, action_dim, max_action, 
-            arch=args.arch, initialize=args.init, img_width=IMG_SIZE, stack=args.stack,
+            arch=args.arch, initialize=args.init, img_width=args.img_width, stack=args.stack,
             decoder=decoder)
     random_policy = RandomEmbeddedPolicy(max_action, decoder)
     policy.mode('eval')

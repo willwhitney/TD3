@@ -13,7 +13,7 @@ import utils
 import TD3_pixels
 import OurDDPG
 import DDPG
-from pixel_wrapper import PixelObservationWrapper, IMG_SIZE, INITIAL_IMG_SIZE
+from pixel_wrapper import PixelObservationWrapper
 
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
@@ -25,9 +25,9 @@ from pointmass import point_mass
 import reacher_family
 
 class StateRegressor(nn.Module):
-    def __init__(self, arch, state_dim, stack=3):
+    def __init__(self, arch, state_dim, stack=3, img_width=32):
         super().__init__()
-        self.conv_layers, self.conv_output_dim = TD3_pixels.build_conv(arch, IMG_SIZE, stack)
+        self.conv_layers, self.conv_output_dim = TD3_pixels.build_conv(arch, img_width, stack)
         self.lin_layers = nn.ModuleList([
             nn.Linear(self.conv_output_dim, 200),
             nn.Linear(200, 200),
@@ -57,16 +57,18 @@ def run_epoch(model, loader, train=False):
     else: model.eval()
 
     mean_loss = 0
-    for batch in loader:
-        x, y, _, _, _ = batch
-        x = x.cuda()
-        y = y.cuda()
-        optim.zero_grad()
-        pred = model(x)
-        loss = F.mse_loss(pred, y)
-        loss.backward()
-        optim.step()
-        mean_loss += loss.item()
+    with torch.set_grad_enabled(train):
+        for batch in loader:
+            x, y, _, _, _ = batch
+            x = x.cuda()
+            y = y.cuda()
+            optim.zero_grad()
+            pred = model(x)
+            loss = F.mse_loss(pred, y)
+            if train:
+                loss.backward()
+                optim.step()
+            mean_loss += loss.item()
     # print(mean_loss / len(loader), len(loader))
     # import ipdb; ipdb.set_trace()
     mean_loss = mean_loss / len(loader)
@@ -87,6 +89,7 @@ def generate_dataset(size):
     done = True
 
     while total_timesteps < size:
+        if total_timesteps % 10000 == 0: print("{}/{}".format(total_timesteps, size))
         if done:
             # Reset environment
             obs = env.reset()
@@ -122,7 +125,8 @@ if __name__ == "__main__":
     parser.add_argument("--seed", default=0, type=int)                  # Sets Gym, PyTorch and Numpy seeds
     parser.add_argument("--start_timesteps", default=1e4, type=float)   # How many time steps purely random policy is run for
     parser.add_argument("--eval_freq", default=5e3, type=float)         # How often (time steps) we evaluate
-    parser.add_argument("--max_timesteps", default=1e7, type=float)     # Max time steps to run environment for
+    parser.add_argument("--train_timesteps", default=1e4, type=int)     # Max time steps to run environment for
+    parser.add_argument("--eval_timesteps", default=1e3, type=int)      # Max time steps to run environment for
     parser.add_argument("--no_save_models", action="store_true")        # Whether or not models are saved
     parser.add_argument("--expl_noise", default=0.1, type=float)        # Std of Gaussian exploration noise
     parser.add_argument("--batch_size", default=100, type=int)          # Batch size for both actor and critic
@@ -141,6 +145,7 @@ if __name__ == "__main__":
     parser.add_argument("--init", action="store_true")                  # use the initialization from DDPG for networks
     parser.add_argument("--arch", default="mine")                       # which network architecture to use (mine or one from https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail/blob/master/a2c_ppo_acktr/model.py#L176)
     parser.add_argument("--stack", default=3, type=int)                 # frames to stack together as input
+    parser.add_argument("--img_width", default=32, type=int)            # size of frames
     args = parser.parse_args()
     args.save_models = not args.no_save_models
 
@@ -178,28 +183,51 @@ if __name__ == "__main__":
     # add a Monitor and log the command-line options
     log_dir = "results/{}/".format(args.name)
     os.makedirs(log_dir, exist_ok=True)
-    env = PixelObservationWrapper(env, stack=args.stack)
+    env = PixelObservationWrapper(env, stack=args.stack, img_width=args.img_width)
     env = bench.Monitor(env, log_dir, allow_early_resets=True)
     utils.write_options(args, log_dir)
+    # import ipdb; ipdb.set_trace()
 
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.shape[0]
     max_action = float(env.action_space.high[0])
 
     # model = StateRegressor(args.arch, len(env.unwrapped.sim.data.qpos) + 2).cuda()
-    model = StateRegressor(args.arch, state_dim, stack=args.stack).cuda()
+    model = StateRegressor(args.arch, state_dim, stack=args.stack, img_width=args.img_width).cuda()
     print(model)
     optim = torch.optim.Adam(model.parameters(), lr=1e-3, amsgrad=True)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optim, 'min', verbose=True)
 
-    # replay_buffer = utils.ReplayBuffer(max_size=args.replay_size)
-    replay_buffer = generate_dataset(args.max_timesteps)
-    eval_replay_buffer = generate_dataset(args.max_timesteps // 10)
-    loader = DataLoader(replay_buffer, num_workers=1, shuffle=True, batch_size=128, drop_last=True)
-    eval_loader = DataLoader(eval_replay_buffer, num_workers=1, shuffle=True, batch_size=128, drop_last=True)
+    data_path = "data/{}_{}_{}".format(args.env_name, args.img_width, args.train_timesteps)
+    try:
+        replay_buffer = utils.ReplayDataset(max_size=args.replay_size)
+        replay_buffer.load(data_path)
+    except FileNotFoundError:
+        replay_buffer = generate_dataset(args.train_timesteps)
+        replay_buffer.save(data_path)
 
-    for epoch in range(200):
+    sample = replay_buffer[0]
+    # import ipdb; ipdb.set_trace()
+
+
+
+    # replay_buffer = utils.ReplayBuffer(max_size=args.replay_size)
+    # data_path = "data/{}_{}_{}.pt".format(args.env_name, args.img_width, args.train_timesteps)
+    # try:
+    #     replay_buffer = torch.load(data_path)
+    # except FileNotFoundError:
+    #     replay_buffer = generate_dataset(args.train_timesteps)
+    #     torch.save(replay_buffer, data_path)
+
+    eval_replay_buffer = generate_dataset(args.eval_timesteps)
+    loader = DataLoader(replay_buffer, num_workers=1, shuffle=True, batch_size=args.batch_size, drop_last=True)
+    eval_loader = DataLoader(eval_replay_buffer, num_workers=1, shuffle=True, batch_size=args.batch_size, drop_last=True)
+
+    for epoch in range(100):
         run_epoch(model, loader, train=True)
         run_epoch(model, eval_loader, train=False)
         print()
+        if epoch % 10 == 0: torch.save(model, log_dir + "regress.pt")
+
+    torch.save(model, log_dir + "regress.pt")
 

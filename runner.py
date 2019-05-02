@@ -9,7 +9,7 @@ if not os.path.exists("slurm_logs"):
     os.makedirs("slurm_logs")
 if not os.path.exists("slurm_scripts"):
     os.makedirs("slurm_scripts")
-code_dir = '/private/home/willwhitney/code'
+code_dir = '/misc/vlgscratch4/FergusGroup/wwhitney'
 
 # basename = "PFnew_start_traj1"
 # grids = [
@@ -237,30 +237,32 @@ code_dir = '/private/home/willwhitney/code'
 #     },
 # ]
 
-basename = "PRV128r32_stack4_embed"
-grids = [
-    # raw
-    {
-        "main_file": ['main_embedded_pixels'],
-        "env_name": [
-            'ReacherVertical-v2',
-        ],
-        # "arch": ['mine_bn', 'ilya_bn'],
-        # "arch": ['minev2_bn', 'minev3_bn'],
-        "arch": ['mine_bn', 'minev2_bn', 'minev3_bn', 'minev4_bn'],
-        "init": [True, False],
+# basename = "PRV128r64_stack4_embed_t3"
+# grids = [
+#     # raw
+#     {
+#         "main_file": ['main_embedded_pixels'],
+#         "env_name": [
+#             'ReacherVertical-v2',
+#         ],
+#         # "arch": ['mine_bn', 'ilya_bn'],
+#         # "arch": ['minev2_bn', 'minev3_bn'],
+#         "arch": ['mine_bn', 'minev2_bn', 'minev3_bn', 'minev4_bn'],
+#         "init": [False],
+#         "stack": [4],
+#         "img_width": [64],
 
-        "decoder": ["nocollide_step001_gear200_white_qvel"],
+#         "decoder": ["nocollide_step001_gear200_white_qvel"],
 
-        # "start_timesteps": [0],
-        "max_timesteps": [1e7],
-        "eval_freq": [1e3],
-        "render_freq": [1e4],
-        "seed": list(range(4)),
-    },
-]
+#         # "start_timesteps": [0],
+#         "max_timesteps": [1e7],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e4],
+#         "seed": list(range(4)),
+#     },
+# ]
 
-# basename = "PRV128_norm_take3"
+# basename = "PRV256_64_fixes"
 # grids = [
 #     # raw
 #     {
@@ -269,9 +271,11 @@ grids = [
 #             'ReacherVertical-v2',
 #         ],
 #         "arch": ['mine', 'mine_bn', 'ilya', 'ilya_bn'],
-#         "init": [True],
+#         "init": [False],
+#         "stack": [4],
+#         "img_width": [64],
 
-#         # "start_timesteps": [0],
+#         "start_timesteps": [0],
 #         "max_timesteps": [1e6],
 #         "eval_freq": [1e3],
 #         "render_freq": [1e4],
@@ -279,6 +283,84 @@ grids = [
 #     },
 # ]
 
+# basename = "PRV256d32_actrepeat_ddpglrnodecay"
+# grids = [
+#     # raw
+#     {
+#         "main_file": ['main_dummy_pixels'],
+#         "env_name": [
+#             'ReacherVertical-v2',
+#         ],
+#         "arch": [
+#             'dcgan_bn',
+#             # 'dcgandeep_bn',
+#             'mine_bn',
+#             # 'lin1_extrawide', 
+#             # 'lin2_extrawide', 
+#             # 'lin3_extrawide', 
+#             # 'conv1_1_wide', 
+#             # 'conv2_1_wide'
+#         ],
+#         "init": [False],
+#         "ddpglr": [True],
+#         "stack": [4],
+#         "img_width": [32],
+
+#         "start_timesteps": [0],
+#         "max_timesteps": [1e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e10],
+#         "seed": list(range(4)),
+#     },
+# ]
+
+# basename = "PRV256r32_finetune"
+# grids = [
+#     # raw
+#     {
+#         "main_file": ['main_pixels_finetune'],
+#         "env_name": [
+#             'ReacherVertical-v2',
+#         ],
+#         "arch": [
+#             'dcgan_bn',
+#             # 'lin1_extrawide', 
+#             # 'lin2_extrawide', 
+#             # 'lin3_extrawide', 
+#             # 'conv1_1_wide', 
+#             # 'conv2_1_wide'
+#         ],
+#         "init": [False],
+#         "stack": [4],
+#         "img_width": [32],
+
+#         "start_timesteps": [0],
+#         "max_timesteps": [1e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e10],
+#         "seed": list(range(4)),
+#     },
+# ]
+
+basename = "PRV256r64_reg"
+grids = [
+    # raw
+    {
+        "main_file": ['main_pixels_regression'],
+        "env_name": [
+            'ReacherVertical-v2',
+        ],
+
+        "stack": [4],
+        "img_width": [64],
+
+        "start_timesteps": [0],
+        "max_timesteps": [1e6],
+        "eval_freq": [1e3],
+        "render_freq": [1e10],
+        "seed": list(range(4)),
+    },
+]
 
 
 jobs = []
@@ -337,12 +419,15 @@ for job in jobs:
         os.makedirs(job_source_dir)
         os.system('cp *.py ' + job_source_dir)
         os.system('cp -R reacher_family ' + job_source_dir)
+        os.system('cp -R pointmass ' + job_source_dir)
     except FileExistsError:
         # with the 'clear' flag, we're starting fresh
         # overwrite the code that's already here
         if clear:
             print("Overwriting existing files.")
             os.system('cp *.py ' + job_source_dir)
+            os.system('cp -R reacher_family ' + job_source_dir)
+            os.system('cp -R pointmass ' + job_source_dir)
 
     jobcommand = "python {}/{}.py{}".format(job_source_dir, job['main_file'], flagstring)
 
@@ -358,23 +443,23 @@ for job in jobs:
                         jobname + ".out\n")
         slurmfile.write("#SBATCH --error=slurm_logs/" + jobname + ".err\n")
         slurmfile.write("#SBATCH --export=ALL\n")
-        slurmfile.write("#SBATCH --signal=USR1@600\n")
+        # slurmfile.write("#SBATCH --signal=USR1@600\n")
         # slurmfile.write("#SBATCH --time=0-02\n")
         # slurmfile.write("#SBATCH --time=0-12\n")
         slurmfile.write("#SBATCH --time=1-00\n")
         # slurmfile.write("#SBATCH -p dev\n")
         # slurmfile.write("#SBATCH -p uninterrupted,dev\n")
         # slurmfile.write("#SBATCH -p uninterrupted\n")
-        slurmfile.write("#SBATCH -p dev,uninterrupted,priority\n")
-        slurmfile.write("#SBATCH --comment='contract end 4/24'\n")
+        # slurmfile.write("#SBATCH -p dev,uninterrupted,priority\n")
+        # slurmfile.write("#SBATCH --comment='contract end 4/24'\n")
         slurmfile.write("#SBATCH -N 1\n")
-        slurmfile.write("#SBATCH --mem=128gb\n")
+        slurmfile.write("#SBATCH --mem=32gb\n")
 
         slurmfile.write("#SBATCH -c 4\n")
         slurmfile.write("#SBATCH --gres=gpu:1\n")
 
         # slurmfile.write("#SBATCH -c 40\n")
-        # slurmfile.write("#SBATCH --constraint=pascal\n")
+        slurmfile.write("#SBATCH --constraint=gpu_12gb\n")
 
         slurmfile.write("cd " + true_source_dir + '\n')
         slurmfile.write("srun " + jobcommand)

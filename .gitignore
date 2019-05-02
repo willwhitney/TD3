@@ -108,3 +108,4 @@ slurm_scripts/
 results/
 .DS_Store
 renders/
+data/
