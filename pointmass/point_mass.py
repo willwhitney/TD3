@@ -52,17 +52,97 @@ class LinearPointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         )
         return self._get_obs()
 
-    # def render(self, mode='human'):
-    #     if mode == 'rgb_array':
-    #         data = self.sim.render(550, 550)
-    #         #self._get_viewer().render()
-    #         # window size used for old mujoco-py:
-    #         #width, height = 500, 500
-    #         #data = self._get_viewer().read_pixels(width, height, depth=False)
-    #         # original image is upside-down, so flip it
-    #         return data[::-1, :, :]
-    #     elif mode == 'human':
-    #         self._get_viewer().render()
+class FastPointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
+    def __init__(self):
+        # self.action_space = spaces.Box(low=-np.ones(2), high=np.ones(2), dtype=np.float32)
+        # self.model.nu = 2
+        mujoco_env.MujocoEnv.__init__(self, dir_path + "/assets/point_mass.xml", 12)
+        utils.EzPickle.__init__(self)
+
+    def build_action_space(self):
+        bounds = self.model.actuator_ctrlrange.copy()
+        low = bounds[:, 0]
+        high = bounds[:, 1]
+        self.action_space = spaces.Box(low=low, high=high, dtype=np.float32)
+
+    def step(self, a):
+        # action_cost = 1000 * np.linalg.norm(a)
+        try:
+            a = np.clip(a, self.action_space.low, self.action_space.high)
+        except:
+            self.build_action_space()
+            a = np.clip(a, self.action_space.low, self.action_space.high)
+
+        self.do_simulation(a, self.frame_skip)
+        reward_ctrl = - 0.1 * np.square(a).sum()
+        reward_dist = - np.linalg.norm(self.sim.data.qpos)
+        reward = reward_dist + reward_ctrl
+        ob = self._get_obs()
+        return ob, reward, False, {}
+
+    def _get_obs(self):
+        qpos = self.sim.data.qpos
+        qvel = self.sim.data.qvel
+        return np.concatenate([qpos, qvel]).ravel()
+
+    def reset_model(self):
+        self.set_state(
+            self.init_qpos + self.np_random.uniform(low=-0.1, high=0.1, size=self.model.nq),
+            self.init_qvel + self.np_random.uniform(low=-.005, high=.005, size=self.model.nv)
+        )
+        return self._get_obs()
+
+class GoalLinearPointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
+    def __init__(self):
+        # self.action_space = spaces.Box(low=-np.ones(2), high=np.ones(2), dtype=np.float32)
+        # self.model.nu = 2
+        mujoco_env.MujocoEnv.__init__(self, dir_path + "/assets/goal_point_mass.xml", 4)
+        utils.EzPickle.__init__(self)
+
+    def build_action_space(self):
+        bounds = self.model.actuator_ctrlrange.copy()
+        low = bounds[:, 0]
+        high = bounds[:, 1]
+        self.action_space = spaces.Box(low=low, high=high, dtype=np.float32)
+
+    def step(self, a):
+        # action_cost = 1000 * np.linalg.norm(a)
+        try:
+            a = np.clip(a, self.action_space.low, self.action_space.high)
+        except:
+            self.build_action_space()
+            a = np.clip(a, self.action_space.low, self.action_space.high)
+
+        self.do_simulation(a, self.frame_skip)
+        # import ipdb; ipdb.set_trace()
+        vec = self.sim.data.geom_xpos[-1] - self.sim.data.geom_xpos[-2]
+        reward = - np.linalg.norm(vec)
+        ob = self._get_obs()
+        return ob, reward, False, {}
+
+    def _get_obs(self):
+        qpos = self.sim.data.qpos
+        qvel = self.sim.data.qvel
+        return np.concatenate([qpos, qvel]).ravel()
+
+    def do_simulation(self, ctrl, n_frames):
+        self.set_state(self.sim.data.qpos, ctrl)
+        self.sim.data.ctrl[:] = ctrl
+
+        for _ in range(n_frames):
+            self.sim.step()
+
+    def reset_model(self):
+        goal = self.np_random.uniform(low=-0.2, high=0.2, size=2)
+        self.model.body_pos[-1, (-2, -3)] = goal
+        # import ipdb; ipdb.set_trace()
+        self.sim.forward()
+        self.set_state(
+            self.init_qpos + self.np_random.uniform(low=-0.1, high=0.1, size=self.model.nq),
+            self.init_qvel + self.np_random.uniform(low=-.005, high=.005, size=self.model.nv)
+        )
+        return self._get_obs()
+
 
 class SparsePointMassEnv(LinearPointMassEnv):
     def __init__(self, *args, **kwargs):
@@ -204,6 +284,16 @@ class ContactLinearPointMassEnv(LinearPointMassEnv):
 register(
     id='LinearPointMass-v0',
     entry_point='pointmass.point_mass:LinearPointMassEnv',
+    max_episode_steps=100,
+)
+register(
+    id='FastPointMass-v0',
+    entry_point='pointmass.point_mass:FastPointMassEnv',
+    max_episode_steps=100,
+)
+register(
+    id='GoalLinearPointMass-v0',
+    entry_point='pointmass.point_mass:GoalLinearPointMassEnv',
     max_episode_steps=100,
 )
 register(
