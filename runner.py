@@ -51,6 +51,47 @@ code_dir = '/misc/vlgscratch4/FergusGroup/wwhitney'
 #     },
 # ]
 
+# basename = "newenvs_qvel_traj4_norm1e5"
+# grids = [
+#     # raw
+#     # {
+#     #     "main_file": ['main'],
+#     #     "env_name": [
+#     #         'Ant-v2',
+#     #         'Walker2d-v2',
+#     #     ],
+
+#     #     # "start_timesteps": [0],
+#     #     "max_timesteps": [1e7],
+#     #     "eval_freq": [5e3],
+#     #     "render_freq": [1e5],
+#     #     "seed": list(range(4)),
+#     # },
+
+
+#     # learned embedding
+#     {
+#         "main_file": ['main_embedded'],
+#         "env_name": [
+#             'Ant-v2',
+#             'Walker2d-v2',
+#         ],
+#         "decoder": [
+#             # "qvel",
+#             # "qvel_traj1",
+#             # "qvel_traj8",
+#             "qvel_traj4_norm1e5",
+#         ],
+
+#         # "start_timesteps": [0],
+#         "max_timesteps": [1e7],
+#         "eval_freq": [5e3],
+#         "render_freq": [1e5],
+#         "seed": list(range(4)),
+#     },
+# ]
+
+
 # basename = "RFnew3_trajs"
 # grids = [
 # #     # raw
@@ -262,23 +303,24 @@ code_dir = '/misc/vlgscratch4/FergusGroup/wwhitney'
 #     },
 # ]
 
-# basename = "PRV256_64_fixes"
+# basename = "PRVr64_noshadow_replaydisk_lrschedfix"
 # grids = [
-#     # raw
 #     {
 #         "main_file": ['main_pixels'],
 #         "env_name": [
 #             'ReacherVertical-v2',
 #         ],
-#         "arch": ['mine', 'mine_bn', 'ilya', 'ilya_bn'],
+#         "arch": ['ilya_bn'],
 #         "init": [False],
 #         "stack": [4],
 #         "img_width": [64],
+#         "lr_schedule": [True],
+#         "replay_type": ['disk'],
 
-#         "start_timesteps": [0],
+#         "start_timesteps": [10000, 100000],
 #         "max_timesteps": [1e6],
 #         "eval_freq": [1e3],
-#         "render_freq": [1e4],
+#         "render_freq": [1e5],
 #         "seed": list(range(4)),
 #     },
 # ]
@@ -342,25 +384,132 @@ code_dir = '/misc/vlgscratch4/FergusGroup/wwhitney'
 #     },
 # ]
 
-basename = "PRV256r64_reg"
+# basename = "PRV256r64_reg"
+# grids = [
+#     # raw
+#     {
+#         "main_file": ['main_pixels_regression'],
+#         "env_name": [
+#             'ReacherVertical-v2',
+#         ],
+
+#         "stack": [4],
+#         "img_width": [64],
+
+#         "start_timesteps": [0],
+#         "max_timesteps": [1e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e10],
+#         "seed": list(range(4)),
+#     },
+# ]
+
+# basename = "LPM64_start10k_fixdisk_t2"
+# grids = [
+#     # raw
+#     {
+#         "main_file": ['main_pixels'],
+#         "env_name": [
+#             'LinearPointMass-v0',
+#         ],
+#         "arch": [
+#             # 'ilya',
+#             'ilya_bn',
+#             # 'ilya_coord',
+#             # 'ilya_coord_bn'
+#             # 'ilya_bn',
+#             # 'mine_bn'
+#         ],
+#         "replay_type": ['dataset', 'disk'],
+#         "lr_schedule": [False],
+#         "stack": [4],
+#         "img_width": [64],
+
+#         "start_timesteps": [10000],
+#         "max_timesteps": [1e5],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e4],
+#         "seed": list(range(4)),
+#     },
+# ]
+
+# basename = "LPMvar64_slow"
+# grids = [
+#     {
+#         "main_file": ['main_pixels'],
+#         "env_name": [
+#             # 'FastPointMass-v0',
+#             'SlowPointMass-v0',
+#             # 'GoalLinearPointMass-v0',
+#         ],
+#         "arch": [
+#             'ilya_bn',
+#         ],
+
+#         "start_timesteps": [10000],
+#         "max_timesteps": [1e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e4],
+#         "seed": list(range(4)),
+#     },
+
+#     {
+#         "main_file": ['main'],
+#         "env_name": [
+#             # 'FastPointMass-v0',
+#             'SlowPointMass-v0',
+#             # 'GoalLinearPointMass-v0',
+#         ],
+
+#         "start_timesteps": [10000],
+#         "max_timesteps": [1e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e4],
+#         "seed": list(range(4)),
+#     },
+# ]
+
+basename = "RFSparse"
 grids = [
     # raw
     {
-        "main_file": ['main_pixels_regression'],
+        "main_file": ['main'],
         "env_name": [
-            'ReacherVertical-v2',
+            'ReacherVerticalSparse-v2',
+            'ReacherTurnSparse-v2',
+            'ReacherPushSparse-v2',
         ],
 
-        "stack": [4],
-        "img_width": [64],
-
-        "start_timesteps": [0],
-        "max_timesteps": [1e6],
+        # "start_timesteps": [0],
+        "max_timesteps": [5e6],
         "eval_freq": [1e3],
-        "render_freq": [1e10],
+        "render_freq": [1e4],
+        "seed": list(range(4)),
+    },
+
+
+    # learned embedding
+    {
+        "main_file": ['main_embedded'],
+        "env_name": [
+            'ReacherVerticalSparse-v2',
+            'ReacherTurnSparse-v2',
+            'ReacherPushSparse-v2',
+        ],
+        "decoder": [
+            "nocollide_step001_gear200_white_qvel",
+        ],
+
+        # "policy_noise": [0.4, 0.2, 0.1],
+        # "expl_noise": [0.2, 0.1, 0.05],
+        # "start_timesteps": [0],
+        "max_timesteps": [5e6],
+        "eval_freq": [1e3],
+        "render_freq": [1e4],
         "seed": list(range(4)),
     },
 ]
+
 
 
 jobs = []
@@ -451,15 +600,14 @@ for job in jobs:
         # slurmfile.write("#SBATCH -p uninterrupted,dev\n")
         # slurmfile.write("#SBATCH -p uninterrupted\n")
         # slurmfile.write("#SBATCH -p dev,uninterrupted,priority\n")
-        # slurmfile.write("#SBATCH --comment='contract end 4/24'\n")
         slurmfile.write("#SBATCH -N 1\n")
-        slurmfile.write("#SBATCH --mem=32gb\n")
+        slurmfile.write("#SBATCH --mem=64gb\n")
 
         slurmfile.write("#SBATCH -c 4\n")
         slurmfile.write("#SBATCH --gres=gpu:1\n")
 
         # slurmfile.write("#SBATCH -c 40\n")
-        slurmfile.write("#SBATCH --constraint=gpu_12gb\n")
+        slurmfile.write("#SBATCH --constraint=pascal|turing|volta\n")
 
         slurmfile.write("cd " + true_source_dir + '\n')
         slurmfile.write("srun " + jobcommand)

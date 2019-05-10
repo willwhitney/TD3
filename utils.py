@@ -132,12 +132,70 @@ class ReplayDataset(Dataset):
 
     def __len__(self):
         return len(self.storage)
-        # return int(self.max_size)
 
     def __getitem__(self, i):
         return self.storage[i]
-        # return self.storage[i % len(self.storage)]
 
+class DiskReplayDataset(Dataset):
+    def __init__(self, path, max_size=1e6):
+        self.storages = None
+        self.path = path
+        self.max_size = int(max_size)
+
+        self.pointer = 0
+        # self.size = 0
+
+    def create_disk_arrays(self, data):
+        def type_for(d): 
+            d_type = np.array(d).dtype
+            if 'float' in str(d_type): d_type = 'float32'
+            return d_type
+        def shape_for(d): return (self.max_size,) + d.shape if isinstance(d, np.ndarray) else (self.max_size,)
+        types = [type_for(d) for d in data]
+        shapes = [shape_for(d) for d in data]
+        os.makedirs(self.path, exist_ok=True)
+        manifest = {
+            'types': types,
+            'shapes': shapes
+        }
+        torch.save(manifest, "{}/manifest.pt".format(self.path))
+        self.storages = [np.memmap("{}/{}.npmm".format(self.path, i), dtype=types[i], mode='write', shape=shapes[i]) 
+                         for i in range(len(data))]
+
+    def add(self, data):
+        if self.storages is None:
+            def shape(d): return d.shape if isinstance(d, np.ndarray) else (1,)
+            # import ipdb; ipdb.set_trace()
+            sizes = tuple([(self.max_size,) + shape(data_elem) for data_elem in data])
+            self.create_disk_arrays(data)
+        address = self.pointer % self.max_size
+        for storage, data_elem in zip(self.storages, data):
+            storage[address] = data_elem
+        self.pointer += 1
+
+    def save(self, path):
+        manifest = {
+            'types': [s.dtype for s in self.storages],
+            'shapes': [s.shape for s in self.storages],
+            'pointer': self.pointer,
+        }
+        torch.save(manifest, "{}/manifest.pt".format(self.path))
+        for storage in self.storages:
+            storage.flush()
+
+    def load(self, path):
+        manifest = torch.load("{}/manifest.pt".format(path))
+        self.storages = [np.memmap("{}/{}.npmm".format(path, i), mode='r', 
+                                   dtype=manifest['types'][i], 
+                                   shape=manifest['shapes'][i]) 
+                        for i in range(5)]
+        self.pointer = manifest['pointer']
+
+    def __len__(self):
+        return min(self.max_size, self.pointer)
+
+    def __getitem__(self, i):
+        return tuple((np.array(storage[i]) for storage in self.storages))
 
 class EmbeddedReplayDataset(Dataset):
     def __init__(self, max_size=1e6, traj_len=4):

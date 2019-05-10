@@ -92,6 +92,11 @@ class FastPointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         )
         return self._get_obs()
 
+class SlowPointMassEnv(FastPointMassEnv):
+    def __init__(self):
+        mujoco_env.MujocoEnv.__init__(self, dir_path + "/assets/point_mass.xml", 4)
+        utils.EzPickle.__init__(self)
+
 class GoalLinearPointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     def __init__(self):
         # self.action_space = spaces.Box(low=-np.ones(2), high=np.ones(2), dtype=np.float32)
@@ -123,7 +128,10 @@ class GoalLinearPointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     def _get_obs(self):
         qpos = self.sim.data.qpos
         qvel = self.sim.data.qvel
-        return np.concatenate([qpos, qvel]).ravel()
+        return np.concatenate([
+                qpos, qvel,
+                self.sim.data.geom_xpos[-1, (0, 1)] # goal position
+        ]).ravel()
 
     def do_simulation(self, ctrl, n_frames):
         self.set_state(self.sim.data.qpos, ctrl)
@@ -289,6 +297,11 @@ register(
 register(
     id='FastPointMass-v0',
     entry_point='pointmass.point_mass:FastPointMassEnv',
+    max_episode_steps=100,
+)
+register(
+    id='SlowPointMass-v0',
+    entry_point='pointmass.point_mass:SlowPointMassEnv',
     max_episode_steps=100,
 )
 register(

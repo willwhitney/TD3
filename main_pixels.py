@@ -71,6 +71,7 @@ if __name__ == "__main__":
     parser.add_argument("--eval_freq", default=5e3, type=float)         # How often (time steps) we evaluate
     parser.add_argument("--max_timesteps", default=1e7, type=float)     # Max time steps to run environment for
     parser.add_argument("--no_save_models", action="store_true")        # Whether or not models are saved
+    parser.add_argument("--save_freq", default=1e4, type=float)         # How often (time steps) we evaluate
     parser.add_argument("--expl_noise", default=0.1, type=float)        # Std of Gaussian exploration noise
     parser.add_argument("--batch_size", default=100, type=int)          # Batch size for both actor and critic
     parser.add_argument("--discount", default=0.99, type=float)         # Discount factor
@@ -88,13 +89,18 @@ if __name__ == "__main__":
     parser.add_argument("--init", action="store_true")                  # use the initialization from DDPG for networks
     parser.add_argument("--arch", default="mine")                       # which network architecture to use (mine or one from https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail/blob/master/a2c_ppo_acktr/model.py#L176)
     parser.add_argument("--stack", default=4, type=int)                 # frames to stack together as input
-    parser.add_argument("--img_width", default=32, type=int)            # size of frames
+    parser.add_argument("--img_width", default=64, type=int)            # size of frames
+    parser.add_argument("--lr_schedule", action="store_true")           # use a learning rate schedule
+    parser.add_argument("--replay_type", default="disk")                # which replay implementation to use
 
     args = parser.parse_args()
     args.save_models = not args.no_save_models
 
     if args.name is None:
         args.name = "Pixel{}_{}_seed{}".format(args.env_name, args.policy_name, args.seed)
+
+    if args.lr_schedule:
+        args.lr_schedule = args.max_timesteps
 
     # file_name = "%s_%s_%s" % (args.policy_name, args.env_name, str(args.seed))
     print("---------------------------------------")
@@ -137,13 +143,21 @@ if __name__ == "__main__":
     # Initialize policy
     if args.policy_name == "TD3": 
         policy = TD3_pixels.TD3Pixels(state_dim, action_dim, max_action, 
-                arch=args.arch, initialize=args.init, img_width=args.img_width, stack=args.stack)
+                arch=args.arch, initialize=args.init, img_width=args.img_width, 
+                stack=args.stack, lr_schedule=args.lr_schedule)
     elif args.policy_name == "OurDDPG": policy = OurDDPG.DDPG(state_dim, action_dim, max_action)
     elif args.policy_name == "DDPG": policy = DDPG.DDPG(state_dim, action_dim, max_action)
     policy.mode('eval')
 
-    # replay_buffer = utils.ReplayBuffer(max_size=args.replay_size)
-    replay_buffer = utils.ReplayDataset(max_size=args.replay_size)
+    if args.replay_type == 'buffer':
+        replay_buffer = utils.ReplayBuffer(max_size=args.replay_size)
+    elif args.replay_type == 'dataset':
+        replay_buffer = utils.ReplayDataset(max_size=args.replay_size)
+    elif args.replay_type == 'disk':
+        data_path = "/scratch/wwhitney/td3_replays/{}".format(args.name)
+        replay_buffer = utils.DiskReplayDataset(path=data_path, max_size=args.replay_size)
+    else:
+        raise Exception("Invalid replay type specified")
 
     # Evaluate untrained policy
     evaluations = [(0, 0, evaluate_policy(policy))]
@@ -151,6 +165,7 @@ if __name__ == "__main__":
     total_timesteps = 0
     timesteps_since_eval = 0
     timesteps_since_render = 0
+    timesteps_since_save = 0
     episode_num = 0
     done = True
 
@@ -169,9 +184,11 @@ if __name__ == "__main__":
             if timesteps_since_eval >= args.eval_freq:
                 timesteps_since_eval %= args.eval_freq
                 evaluations.append((episode_num, total_timesteps, evaluate_policy(policy)))
-
-                if args.save_models: policy.save("policy", directory=log_dir)
                 np.save("{}/eval.npy".format(log_dir), np.stack(evaluations))
+
+            if args.save_models and timesteps_since_save > args.save_freq: 
+                timesteps_since_save %= args.save_freq
+                policy.save("policy", directory=log_dir)
 
             if timesteps_since_render >= args.render_freq:
                 timesteps_since_render %= args.render_freq

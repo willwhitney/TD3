@@ -23,6 +23,17 @@ class Lambda(nn.Module):
     def forward(self, x):
         return self.lambd(x)
 
+class AddCoords(nn.Module):
+    def forward(self, x):
+        img_width = x.size()[-1]
+        bsize = x.size(0)
+        coords = torch.linspace(-1, 1, img_width).type_as(x)
+        x_coords = coords.reshape(1, 1, 1, img_width).repeat(bsize, 1, img_width, 1)
+        y_coords = coords.reshape(1, 1, img_width, 1).repeat(bsize, 1, 1, img_width)
+        result = torch.cat([x, x_coords, y_coords], dim=1)
+        # import ipdb; ipdb.set_trace()
+        return result
+
 def build_conv(arch, img_width, stack=3):
     if arch == "dummy":
         return nn.ModuleList([]), img_width**2 * stack * 3
@@ -299,6 +310,20 @@ def build_conv(arch, img_width, stack=3):
             # nn.Conv2d(256, 512, 4, stride=2, padding=1),
         ])
 
+    elif arch == "dcgan_coord_bn":
+        conv_layers = nn.ModuleList([
+            AddCoords(),
+            nn.Conv2d(stack * 3 + 2, 32, 4, stride=2, padding=1),
+            nn.BatchNorm2d(32),
+            nn.Conv2d(32, 64, 4, stride=2, padding=1),
+            nn.BatchNorm2d(64),
+            nn.Conv2d(64, 128, 4, stride=2, padding=1),
+            nn.BatchNorm2d(128),
+            nn.Conv2d(128, 256, 4, stride=2, padding=1),
+            # nn.BatchNorm2d(256),
+            # nn.Conv2d(256, 512, 4, stride=2, padding=1),
+        ])
+
     elif arch == "dcgandeep_bn":
         conv_layers = nn.ModuleList([
             nn.Conv2d(stack * 3, 32, 4, stride=2, padding=1),
@@ -312,6 +337,41 @@ def build_conv(arch, img_width, stack=3):
             nn.Conv2d(256, 256, 4, stride=2, padding=1),
             nn.BatchNorm2d(256),
             nn.Conv2d(256, 256, 4, stride=2, padding=1),
+        ])
+
+    elif arch == "impala":
+        conv_layers = nn.ModuleList([
+            nn.Conv2d(stack * 3, 16, 8, stride=4),
+            nn.Conv2d(16, 32, 4, stride=2),
+        ])
+
+    elif arch == "impala_bn":
+        conv_layers = nn.ModuleList([
+            nn.BatchNorm2d(stack * 3),
+            nn.Conv2d(stack * 3, 16, 8, stride=4),
+            nn.BatchNorm2d(16),
+            nn.Conv2d(16, 32, 4, stride=2),
+        ])
+
+    elif arch == "ilya_coord":
+        # conv_output_dim = 512
+        conv_layers = nn.ModuleList([
+            AddCoords(),
+            nn.Conv2d(stack * 3 + 2, 32, 8, stride=4),
+            nn.Conv2d(32, 32, 4, stride=2),
+            nn.Conv2d(32, 32, 3),
+        ])
+
+    elif arch == "ilya_coord_bn":
+        # conv_output_dim = 512
+        conv_layers = nn.ModuleList([
+            AddCoords(),
+            nn.BatchNorm2d(stack * 3 + 2),
+            nn.Conv2d(stack * 3 + 2, 32, 8, stride=4),
+            nn.BatchNorm2d(32),
+            nn.Conv2d(32, 32, 4, stride=2),
+            nn.BatchNorm2d(32),
+            nn.Conv2d(32, 32, 3),
         ])
 
     conv_output_dim = utils.prod(utils.conv_list_out_dim(conv_layers, img_width, img_width))
@@ -435,16 +495,18 @@ class Critic(nn.Module):
         return x
 
 
-
+# def lr_lambda(epoch):
+#     return max(1 - epoch / 10000, 0)
 
 class TD3Pixels(object):
-    def __init__(self, state_dim, action_dim, max_action, arch="mine", initialize=True, img_width=128, stack=4, ddpglr=False):
+    def __init__(self, state_dim, action_dim, max_action, arch="mine", initialize=True, img_width=128, stack=4, ddpglr=False, lr_schedule=False):
         self.actor = Actor(action_dim, max_action, arch, initialize, img_width, stack).to(device)
         self.actor_target = Actor(action_dim, max_action, arch, initialize, img_width, stack).to(device)
         self.actor_target.load_state_dict(self.actor.state_dict())
         if ddpglr:
             self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=1e-4)
         else:
+            # self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=3e-3)
             self.actor_optimizer = torch.optim.Adam(self.actor.parameters())
 
         self.critic = Critic(action_dim, arch, initialize, img_width, stack).to(device)
@@ -453,7 +515,14 @@ class TD3Pixels(object):
         if ddpglr:
             self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=1e-3)
         else:
+            # self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=3e-3)
             self.critic_optimizer = torch.optim.Adam(self.critic.parameters())
+
+        self.lr_schedule = lr_schedule
+        if self.lr_schedule:
+            # linear LR decay from 1 to 0 over the course of 10K episodes
+            self.actor_lr_schedule = torch.optim.lr_scheduler.LambdaLR(self.actor_optimizer, lr_lambda=self.lr_lambda)
+            self.critic_lr_schedule = torch.optim.lr_scheduler.LambdaLR(self.critic_optimizer, lr_lambda=self.lr_lambda)
 
         print(self.actor)
         print(self.critic)
@@ -461,6 +530,11 @@ class TD3Pixels(object):
 
         self.max_action = max_action
         # self.data_loader = None
+
+    def lr_lambda(self, epoch):
+        max_episodes = self.lr_schedule / 100
+        # import ipdb; ipdb.set_trace()
+        return max(1 - epoch / max_episodes, 0)
 
     # @profile
     def select_action(self, state):
@@ -554,6 +628,10 @@ class TD3Pixels(object):
                     for param, target_param in zip(self.actor.parameters(), self.actor_target.parameters()):
                         target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
 
+        if self.lr_schedule:
+            self.actor_lr_schedule.step()
+            self.critic_lr_schedule.step()
+            # import ipdb; ipdb.set_trace()
         # end = time.time()
         # print("Training time: {:.3f}".format(end - start))
         self.mode('eval')

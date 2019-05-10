@@ -6,6 +6,7 @@ import os
 from baselines import bench
 import sys
 import skimage.transform
+import torch.nn.functional as F
 
 import utils
 import TD3
@@ -97,7 +98,6 @@ if __name__ == "__main__":
     parser.add_argument("--render_freq", default=5e3, type=float)       # How often (time steps) we render
     
     parser.add_argument("--init", action="store_true")                  # use the initialization from DDPG for networks
-    parser.add_argument("--arch", default="mine")                       # which network architecture to use (mine or one from https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail/blob/master/a2c_ppo_acktr/model.py#L176)
     parser.add_argument("--stack", default=4, type=int)                 # frames to stack together as input
     parser.add_argument("--img_width", default=32, type=int)            # size of frames
 
@@ -164,6 +164,10 @@ if __name__ == "__main__":
     timesteps_since_render = 0
     episode_num = 0
     done = True
+    predictions = []
+    true = []
+
+
 
     while total_timesteps < args.max_timesteps:
 
@@ -191,12 +195,22 @@ if __name__ == "__main__":
             # Reset environment
             obs = env.reset()
             obs = regress(obs)
+            predictions.append(obs)
+            true.append(env.unwrapped._get_obs())
 
             policy.reset()
             done = False
             episode_reward = 0
             episode_timesteps = 0
             episode_num += 1
+
+            if total_timesteps > 0:
+                import ipdb; ipdb.set_trace()
+                pred_error = F.mse_loss(torch.from_numpy(np.stack(predictions)).float(), torch.from_numpy(np.stack(true)).float())
+                print("Regressor prediction error: {:.3f}".format(pred_error.item()))
+                predictions = []
+                true = []
+
 
         # Select action randomly or according to policy
         if total_timesteps < args.start_timesteps:
@@ -209,6 +223,8 @@ if __name__ == "__main__":
         # Perform action
         new_obs, reward, done, _ = env.step(action)
         new_obs = regress(new_obs)
+        predictions.append(new_obs)
+        true.append(env.unwrapped._get_obs())
 
         done_bool = 0 if episode_timesteps + 1 == env_max_steps else float(done)
         episode_reward += reward

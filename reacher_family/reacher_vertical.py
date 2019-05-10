@@ -52,9 +52,9 @@ class ReacherVerticalEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 class ReacherVerticalSparseEnv(ReacherVerticalEnv):
     def step(self, a):
         vec = self.get_body_com("fingertip")-self.get_body_com("target")
-        # reward_dist = np.linalg.norm(vec)
-        # reward_ctrl = - 0.1 * np.square(a).sum()
-        reward = 1 if np.linalg.norm(vec) < 0.05 else 0
+        reward_dist = 1 if np.linalg.norm(vec) < 0.05 else 0
+        reward_ctrl = - 0.1 * np.square(a).sum()
+        reward = reward_dist + reward_ctrl
         self.do_simulation(a, self.frame_skip)
         ob = self._get_obs()
         done = False

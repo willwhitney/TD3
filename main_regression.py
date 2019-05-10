@@ -82,8 +82,11 @@ def run_epoch(model, loader, train=False):
         print(utils.flat_str(y[0]))
         # print(torch.stack([pred[0], y[0]], dim=1))
 
-def generate_dataset(size):
-    dataset = utils.ReplayDataset(max_size=size)
+def generate_dataset(size, persist=None):
+    if persist:
+        dataset = utils.DiskReplayDataset(path=persist, max_size=size)
+    else:
+        dataset = utils.ReplayDataset(max_size=size)
     total_timesteps = 0
     episode_num = 0
     done = True
@@ -203,7 +206,7 @@ if __name__ == "__main__":
         replay_buffer = utils.ReplayDataset(max_size=args.replay_size)
         replay_buffer.load(data_path)
     except FileNotFoundError:
-        replay_buffer = generate_dataset(args.train_timesteps)
+        replay_buffer = generate_dataset(args.train_timesteps, persist=data_path)
         replay_buffer.save(data_path)
 
     sample = replay_buffer[0]
