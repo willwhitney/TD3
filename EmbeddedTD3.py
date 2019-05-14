@@ -36,6 +36,10 @@ class Critic(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(Critic, self).__init__()
 
+        self.action_repeat = max(1, int(0.5 * state_dim // action_dim))
+        action_dim = action_dim * self.action_repeat
+
+
         # Q1 architecture
         self.l1 = nn.Linear(state_dim + action_dim, 400)
         self.l2 = nn.Linear(400, 300)
@@ -48,8 +52,8 @@ class Critic(nn.Module):
 
 
     def forward(self, x, u, i):
-        # xu = torch.cat([x, u], 1)
-        xu = torch.cat([x, u, i], 1)
+        u = torch.cat([u, i], 1)
+        xu = torch.cat([x, u.repeat([1, self.action_repeat])], dim=1)
 
         x1 = F.relu(self.l1(xu))
         x1 = F.relu(self.l2(x1))
@@ -62,8 +66,8 @@ class Critic(nn.Module):
 
 
     def Q1(self, x, u, i):
-        # xu = torch.cat([x, u], 1)
-        xu = torch.cat([x, u, i], 1)
+        u = torch.cat([u, i], 1)
+        xu = torch.cat([x, u.repeat([1, self.action_repeat])], dim=1)
 
         x1 = F.relu(self.l1(xu))
         x1 = F.relu(self.l2(x1))
@@ -85,8 +89,8 @@ class EmbeddedTD3(object):
         self.actor_optimizer = torch.optim.Adam(self.actor.parameters())
 
         # add an extra input to the critic for which timestep we're on
-        self.critic = Critic(state_dim + 1, self.e_action_dim).to(device)
-        self.critic_target = Critic(state_dim + 1, self.e_action_dim).to(device)
+        self.critic = Critic(state_dim, self.e_action_dim + 1).to(device)
+        self.critic_target = Critic(state_dim, self.e_action_dim + 1).to(device)
         self.critic_target.load_state_dict(self.critic.state_dict())
         self.critic_optimizer = torch.optim.Adam(self.critic.parameters())
 

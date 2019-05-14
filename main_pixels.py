@@ -83,7 +83,7 @@ if __name__ == "__main__":
     parser.add_argument("--decoder", default=None, type=str)            # Name of saved decoder
     parser.add_argument("--dummy_decoder", action="store_true")         # use a dummy decoder that repeats actions
     parser.add_argument('--dummy_traj_len', type=int, default=1)        # traj_len of dummy decoder
-    parser.add_argument("--replay_size", default=1e6, type=int)         # Size of replay buffer
+    parser.add_argument("--replay_size", default=1e5, type=int)         # Size of replay buffer
     parser.add_argument("--render_freq", default=5e3, type=float)       # How often (time steps) we render
     
     parser.add_argument("--init", action="store_true")                  # use the initialization from DDPG for networks

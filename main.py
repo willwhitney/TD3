@@ -110,6 +110,10 @@ if __name__ == "__main__":
     else:
         env = gym.make(args.env_name)
         env_max_steps = env._max_episode_steps
+        if ('Fetch' in args.env_name) or ('Hand' in args.env_name):
+            from robot_wrapper import RobotWrapper
+            env = RobotWrapper(env)
+
 
     # Set seeds
     env.seed(args.seed)

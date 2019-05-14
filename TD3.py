@@ -35,6 +35,9 @@ class Critic(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(Critic, self).__init__()
 
+        self.action_repeat = max(1, int(0.5 * state_dim // action_dim))
+        action_dim = action_dim * self.action_repeat
+
         # Q1 architecture
         self.l1 = nn.Linear(state_dim + action_dim, 400)
         self.l2 = nn.Linear(400, 300)
@@ -47,7 +50,8 @@ class Critic(nn.Module):
 
 
     def forward(self, x, u):
-        xu = torch.cat([x, u], 1)
+        # xu = torch.cat([x, u], 1)
+        xu = torch.cat([x, u.repeat([1, self.action_repeat])], dim=1)
 
         x1 = F.relu(self.l1(xu))
         x1 = F.relu(self.l2(x1))
@@ -60,7 +64,8 @@ class Critic(nn.Module):
 
 
     def Q1(self, x, u):
-        xu = torch.cat([x, u], 1)
+        xu = torch.cat([x, u.repeat([1, self.action_repeat])], dim=1)
+        # xu = torch.cat([x, u], 1)
 
         x1 = F.relu(self.l1(xu))
         x1 = F.relu(self.l2(x1))

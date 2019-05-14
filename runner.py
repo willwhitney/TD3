@@ -469,47 +469,115 @@ code_dir = '/misc/vlgscratch4/FergusGroup/wwhitney'
 #     },
 # ]
 
-basename = "RFSparse"
+# basename = "FetchReach"
+# basename = "HandBlock"
+# grids = [
+#     # raw
+#     {
+#         "main_file": ['main'],
+#         "env_name": [
+#             'HandManipulateBlockDense-v0',
+#         ],
+
+#         # "start_timesteps": [0],
+#         "max_timesteps": [5e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e4],
+#         "seed": list(range(4)),
+#     },
+
+
+#     # learned embedding
+#     {
+#         "main_file": ['main_embedded'],
+#         "env_name": [
+#             'HandManipulateBlockDense-v0',
+#         ],
+#         "decoder": [
+#             "qvel",
+#         ],
+
+#         # "policy_noise": [0.4, 0.2, 0.1],
+#         # "expl_noise": [0.2, 0.1, 0.05],
+#         # "start_timesteps": [0],
+#         "max_timesteps": [5e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e4],
+#         "seed": list(range(4)),
+#     },
+# ]
+
+basename = "PRP_encode_longrun"
 grids = [
     # raw
     {
-        "main_file": ['main'],
+        "main_file": ['main_pixels_encode'],
         "env_name": [
-            'ReacherVerticalSparse-v2',
-            'ReacherTurnSparse-v2',
-            'ReacherPushSparse-v2',
+            'ReacherPush-v2',
         ],
 
+        "source_env": ["PixelReacherPush-v2"],
+        "decoder": ["skl5e7"],
+
         # "start_timesteps": [0],
-        "max_timesteps": [5e6],
+        "max_timesteps": [1e7],
         "eval_freq": [1e3],
-        "render_freq": [1e4],
+        "render_freq": [1e5],
         "seed": list(range(4)),
     },
-
-
-    # learned embedding
     {
-        "main_file": ['main_embedded'],
+        "main_file": ['main_embedded_pixels_encode'],
         "env_name": [
-            'ReacherVerticalSparse-v2',
-            'ReacherTurnSparse-v2',
-            'ReacherPushSparse-v2',
-        ],
-        "decoder": [
-            "nocollide_step001_gear200_white_qvel",
+            'ReacherPush-v2',
         ],
 
-        # "policy_noise": [0.4, 0.2, 0.1],
-        # "expl_noise": [0.2, 0.1, 0.05],
+        "source_env": ["PixelReacherPush-v2"],
+        "decoder": ["skl5e7"],
+
         # "start_timesteps": [0],
-        "max_timesteps": [5e6],
+        "max_timesteps": [1e7],
         "eval_freq": [1e3],
-        "render_freq": [1e4],
+        "render_freq": [1e5],
         "seed": list(range(4)),
     },
+
+    {
+        "main_file": ['main_pixels_vae'],
+        "env_name": [
+            'ReacherPush-v2',
+        ],
+
+        "source_env": ["PixelReacherPush-v2"],
+        "decoder": ["vae", "vae_dim25"],
+
+        # "start_timesteps": [0],
+        "max_timesteps": [1e7],
+        "eval_freq": [1e3],
+        "render_freq": [1e5],
+        "seed": list(range(4)),
+    },
+
 ]
 
+# basename = "PRV_vae"
+# grids = [
+#     # raw
+#     {
+#         "main_file": ['main_pixels_vae'],
+#         "env_name": [
+#             'ReacherVertical-v2',
+#         ],
+
+#         "source_env": ["PixelReacherVertical-v2"],
+#         "decoder": ["vae"],
+
+#         # "start_timesteps": [0],
+#         "max_timesteps": [1e7],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e5],
+#         "seed": list(range(8)),
+#     },
+# ]
 
 
 jobs = []
@@ -595,7 +663,7 @@ for job in jobs:
         # slurmfile.write("#SBATCH --signal=USR1@600\n")
         # slurmfile.write("#SBATCH --time=0-02\n")
         # slurmfile.write("#SBATCH --time=0-12\n")
-        slurmfile.write("#SBATCH --time=1-00\n")
+        slurmfile.write("#SBATCH --time=2-00\n")
         # slurmfile.write("#SBATCH -p dev\n")
         # slurmfile.write("#SBATCH -p uninterrupted,dev\n")
         # slurmfile.write("#SBATCH -p uninterrupted\n")

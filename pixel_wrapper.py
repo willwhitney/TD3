@@ -46,3 +46,4 @@ class PixelObservationWrapper(Wrapper):
         # for _ in range(self.stack):
         # self.step(np.zeros(self.action_space.shape))
         return self.observation()
+

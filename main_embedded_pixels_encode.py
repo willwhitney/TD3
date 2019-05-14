@@ -3,6 +3,7 @@ import torch
 import gym
 import argparse
 import os
+import time
 from baselines import bench
 
 import utils
@@ -12,6 +13,7 @@ from RandomEmbeddedPolicy import RandomEmbeddedPolicy
 import OurDDPG
 import DDPG
 from DummyDecoder import DummyDecoder
+from pixel_wrapper import PixelObservationWrapper
 
 # from pointmass import point_mass
 import reacher_family
@@ -23,16 +25,26 @@ sys.path.insert(0, '../action-embedding')
 # sys.path.insert(0, '../pytorch-a2c-ppo-acktr')
 # import envs
 # print("imports done")
+
+def encode(obs):
+    with torch.no_grad():
+        obs = torch.tensor(obs).float().unsqueeze(0).cuda()
+        regressed_obs = model.encode_state(obs)[0][0].cpu().numpy()
+    return regressed_obs
+
+
 # Runs policy for X episodes and returns average reward
 def evaluate_policy(policy, eval_episodes=10):
     avg_reward = 0.
     for _ in range(eval_episodes):
         obs = env.reset()
+        obs = encode(obs)
         policy.reset()
         done = False
         while not done:
             action, _, _ = policy.select_action(np.array(obs))
             obs, reward, done, _ = env.step(action)
+            obs = encode(obs)
             avg_reward += reward
 
     avg_reward /= eval_episodes
@@ -47,13 +59,17 @@ def render_policy(policy, log_dir, total_timesteps, eval_episodes=5):
     frames = []
     for episode in range(eval_episodes):
         obs = env.reset()
+        obs = encode(obs)
         policy.reset()
-        frames.append(env.render(mode='rgb_array'))
+
+        frame = env.render_obs(color_last=True) * 255
+        frames.append(frame)
         done = False
         while not done:
             action, _, _ = policy.select_action(np.array(obs))
             obs, reward, done, _ = env.step(action)
-            frame = env.render(mode='rgb_array')
+            obs = encode(obs)
+            frame = env.render_obs(color_last=True) * 255
 
             frame[:, :, 1] = (frame[:, :, 1].astype(float) + reward * 100).clip(0, 255)
             frames.append(frame)
@@ -89,11 +105,15 @@ if __name__ == "__main__":
     parser.add_argument("--replay_size", default=1e6, type=int)         # Size of replay buffer
     parser.add_argument("--max_e_action", default=None, type=int)       # Clip the scale of the action embeddings
     parser.add_argument("--render_freq", default=5e3, type=float)       # How often (time steps) we render
+
+    parser.add_argument("--stack", default=4, type=int)                 # frames to stack together as input
+    parser.add_argument("--img_width", default=64, type=int)            # size of frames
+
     args = parser.parse_args()
     args.save_models = not args.no_save_models
 
     if args.name is None:
-        args.name = "{}_{}_seed{}".format(args.env_name, args.policy_name, args.seed)
+        args.name = "Pixel{}_{}_seed{}".format(args.env_name, args.policy_name, args.seed)
 
     # file_name = "%s_%s_%s" % (args.policy_name, args.env_name, str(args.seed))
     print("---------------------------------------")
@@ -128,11 +148,16 @@ if __name__ == "__main__":
     # add a Monitor and log the command-line options
     log_dir = "results/{}/".format(args.name)
     os.makedirs(log_dir, exist_ok=True)
-    env = bench.Monitor(env, log_dir, allow_early_resets=True)
+    env = PixelObservationWrapper(env, stack=args.stack, img_width=args.img_width)
+    # env = bench.Monitor(env, log_dir, allow_early_resets=True)
     utils.write_options(args, log_dir)
 
+    model_path = "../action-embedding/results/{}/{}/model_200.pt".format(args.source_env, args.decoder)
+    print("Loading model from {}".format(model_path))
+    model = torch.load(model_path).cuda().eval()
+
     # import ipdb; ipdb.set_trace()
-    state_dim = env.observation_space.shape[0]
+    state_dim = model.state_embed_size
     action_dim = env.action_space.shape[0]
     max_action = float(env.action_space.high[0])
 
@@ -165,6 +190,10 @@ if __name__ == "__main__":
     policy = EmbeddedTD3(state_dim, action_dim, max_action, decoder)
     random_policy = RandomEmbeddedPolicy(max_action, decoder)
 
+    print(model)
+    print(policy.actor)
+    print(policy.critic)
+
     replay_buffer = utils.EmbeddedReplayBuffer(max_size=args.replay_size)
 
     # Evaluate untrained policy
@@ -175,10 +204,12 @@ if __name__ == "__main__":
     timesteps_since_render = 0
     episode_num = 0
     done = True
+    start_time = time.time()
 
     while total_timesteps < args.max_timesteps:
 
         if done:
+            print("Episode time: {:.3f}s".format(time.time() - start_time))
 
             if total_timesteps != 0:
                 print("Total T: %d Episode Num: %d Episode T: %d Reward: %f" % (total_timesteps, episode_num, episode_timesteps, episode_reward))
@@ -200,10 +231,12 @@ if __name__ == "__main__":
 
             # Reset environment
             obs = env.reset()
+            obs = encode(obs)
             policy.reset()
             episode_reward = 0
             episode_timesteps = 0
             episode_num += 1
+            start_time = time.time()
 
         # Select action randomly or according to policy
         if total_timesteps < args.start_timesteps:
@@ -214,6 +247,7 @@ if __name__ == "__main__":
 
         # Perform action
         new_obs, reward, done, _ = env.step(action)
+        new_obs = encode(new_obs)
         done_bool = 0 if episode_timesteps + 1 == env_max_steps else float(done)
         episode_reward += reward
 
