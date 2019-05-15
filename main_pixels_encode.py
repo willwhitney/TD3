@@ -25,6 +25,7 @@ def encode(obs):
     with torch.no_grad():
         obs = torch.tensor(obs).float().unsqueeze(0).cuda()
         regressed_obs = model.encode_state(obs)[0][0].cpu().numpy()
+        # print(regressed_obs.max(), regressed_obs.min())
     return regressed_obs
 
 
@@ -66,7 +67,7 @@ def render_policy(policy, log_dir, total_timesteps, eval_episodes=5):
             obs = encode(obs)
             frame = env.render_obs(color_last=True) * 255
 
-            frame[:, :, 1] = (frame[:, :, 1].astype(float) + reward * 100).clip(0, 255)
+            # frame[:, :, 1] = (frame[:, :, 1].astype(float) + reward * 100).clip(0, 255)
             frames.append(frame)
 
     utils.save_gif('{}/{}.mp4'.format(log_dir, total_timesteps),
@@ -161,6 +162,7 @@ if __name__ == "__main__":
     print(policy.critic)
 
     replay_buffer = utils.ReplayBuffer(max_size=args.replay_size)
+    # replay_buffer = utils.ReplayDataset(max_size=args.replay_size)
 
     # Evaluate untrained policy
     evaluations = [(0, 0, evaluate_policy(policy))]

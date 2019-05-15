@@ -4,7 +4,7 @@ import skimage.transform
 import torch
 from gym import spaces
 
-INITIAL_IMG_SIZE = 256
+INITIAL_IMG_SIZE = 64
 IMG_SIZE = 64
 
 class EmbedPixelObservationWrapper(Wrapper):
@@ -48,4 +48,8 @@ class EmbedPixelObservationWrapper(Wrapper):
         self.env.reset(**kwargs)
         self.observations = [np.zeros([self.encoder.state_embed_size]) 
                              for _ in range(self.stack - 1)] + [self.render_obs()]
+        for _ in range(self.stack - 1):
+            self.step(self.action_space.sample())
+        self.env._elapsed_steps = 0
+
         return self.observation()

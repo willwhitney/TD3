@@ -4,12 +4,15 @@ import itertools
 
 dry_run = '--dry-run' in sys.argv
 clear = '--clear' in sys.argv
+local = '--local' in sys.argv
+double_book = '--double-book' in sys.argv
 
 if not os.path.exists("slurm_logs"):
     os.makedirs("slurm_logs")
 if not os.path.exists("slurm_scripts"):
     os.makedirs("slurm_scripts")
-code_dir = '/misc/vlgscratch4/FergusGroup/wwhitney'
+# code_dir = '/misc/vlgscratch4/FergusGroup/wwhitney'
+code_dir = '..'
 
 # basename = "PFnew_start_traj1"
 # grids = [
@@ -507,9 +510,105 @@ code_dir = '/misc/vlgscratch4/FergusGroup/wwhitney'
 #     },
 # ]
 
-basename = "PRP_encode_longrun"
+# basename = "PRV_en64_noblank"
+# grids = [
+#     # raw
+#     {
+#         "main_file": ['main_pixels_encode'],
+#         "env_name": [
+#             'ReacherVertical-v2',
+#         ],
+
+#         "source_env": ["PixelReacherVertical-v2"],
+#         "decoder": ["64"],
+
+#         # "start_timesteps": [0],
+#         "max_timesteps": [3e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e5],
+#         "seed": list(range(5,9)),
+#     },
+#     {
+#         "main_file": ['main_embedded_pixels_encode'],
+#         "env_name": [
+#             'ReacherVertical-v2',
+#         ],
+
+#         "source_env": ["PixelReacherVertical-v2"],
+#         "decoder": ["64"],
+
+#         # "start_timesteps": [0],
+#         "max_timesteps": [3e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e5],
+#         "seed": list(range(5,9)),
+#     },
+
+#     {
+#         "main_file": ['main_pixels_vae'],
+#         "env_name": [
+#             'ReacherVertical-v2',
+#         ],
+
+#         "source_env": ["PixelReacherVertical-v2"],
+#         "decoder": ["vae64"],
+
+#         # "start_timesteps": [0],
+#         "max_timesteps": [3e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e5],
+#         "seed": list(range(8)),
+#     },
+# ]
+
+basename = "PRF_en64_noblank"
 grids = [
-    # raw
+    {
+        "main_file": ['main_pixels_encode'],
+        "env_name": [
+            'ReacherTurn-v2',
+        ],
+
+        "source_env": ["PixelReacherTurn-v2"],
+        "decoder": ["64"],
+
+        # "start_timesteps": [0],
+        "max_timesteps": [5e6],
+        "eval_freq": [1e3],
+        "render_freq": [1e5],
+        "seed": [9, 10],
+    },
+    {
+        "main_file": ['main_embedded_pixels_encode'],
+        "env_name": [
+            'ReacherTurn-v2',
+        ],
+
+        "source_env": ["PixelReacherTurn-v2"],
+        "decoder": ["64"],
+
+        # "start_timesteps": [0],
+        "max_timesteps": [5e6],
+        "eval_freq": [1e3],
+        "render_freq": [1e5],
+        "seed": [9, 10],
+    },
+    {
+        "main_file": ['main_pixels_vae'],
+        "env_name": [
+            'ReacherTurn-v2',
+        ],
+
+        "source_env": ["PixelReacherTurn-v2"],
+        "decoder": ["vae64"],
+
+        # "start_timesteps": [0],
+        "max_timesteps": [5e6],
+        "eval_freq": [1e3],
+        "render_freq": [1e5],
+        "seed": [9, 10],
+    },
+
     {
         "main_file": ['main_pixels_encode'],
         "env_name": [
@@ -517,13 +616,13 @@ grids = [
         ],
 
         "source_env": ["PixelReacherPush-v2"],
-        "decoder": ["skl5e7"],
+        "decoder": ["64"],
 
         # "start_timesteps": [0],
-        "max_timesteps": [1e7],
+        "max_timesteps": [5e6],
         "eval_freq": [1e3],
         "render_freq": [1e5],
-        "seed": list(range(4)),
+        "seed": [9, 10],
     },
     {
         "main_file": ['main_embedded_pixels_encode'],
@@ -532,13 +631,13 @@ grids = [
         ],
 
         "source_env": ["PixelReacherPush-v2"],
-        "decoder": ["skl5e7"],
+        "decoder": ["64"],
 
         # "start_timesteps": [0],
-        "max_timesteps": [1e7],
+        "max_timesteps": [5e6],
         "eval_freq": [1e3],
         "render_freq": [1e5],
-        "seed": list(range(4)),
+        "seed": [9, 10],
     },
 
     {
@@ -548,15 +647,14 @@ grids = [
         ],
 
         "source_env": ["PixelReacherPush-v2"],
-        "decoder": ["vae", "vae_dim25"],
+        "decoder": ["vae64"],
 
         # "start_timesteps": [0],
-        "max_timesteps": [1e7],
+        "max_timesteps": [5e6],
         "eval_freq": [1e3],
         "render_freq": [1e5],
-        "seed": list(range(4)),
+        "seed": [9, 10],
     },
-
 ]
 
 # basename = "PRV_vae"
@@ -603,6 +701,7 @@ varying_keys = {key for key in merged if len(merged[key]) > 1}
 
 excluded_flags = {'main_file'}
 
+job_specs = []
 for job in jobs:
     jobname = basename
     flagstring = ""
@@ -622,10 +721,6 @@ for job in jobs:
         if flag in varying_keys:
             jobname = jobname + "_" + flag + str(job[flag])
     flagstring = flagstring + " --name " + jobname
-
-    slurm_script_path = 'slurm_scripts/' + jobname + '.slurm'
-    slurm_script_dir = os.path.dirname(slurm_script_path)
-    os.makedirs(slurm_script_dir, exist_ok=True)
 
     slurm_log_dir = 'slurm_logs/' + jobname 
     os.makedirs(os.path.dirname(slurm_log_dir), exist_ok=True)
@@ -648,38 +743,83 @@ for job in jobs:
 
     jobcommand = "python {}/{}.py{}".format(job_source_dir, job['main_file'], flagstring)
 
-    job_start_command = "sbatch " + slurm_script_path
     # jobcommand += " --restart-command '{}'".format(job_start_command)
+    job_specs.append((jobname, jobcommand))
 
-    print(jobcommand)
-    with open(slurm_script_path, 'w') as slurmfile:
-        slurmfile.write("#!/bin/bash\n")
-        slurmfile.write("#SBATCH --job-name" + "=" + jobname + "\n")
-        slurmfile.write("#SBATCH --open-mode=append\n")
-        slurmfile.write("#SBATCH --output=slurm_logs/" +
-                        jobname + ".out\n")
-        slurmfile.write("#SBATCH --error=slurm_logs/" + jobname + ".err\n")
-        slurmfile.write("#SBATCH --export=ALL\n")
-        # slurmfile.write("#SBATCH --signal=USR1@600\n")
-        # slurmfile.write("#SBATCH --time=0-02\n")
-        # slurmfile.write("#SBATCH --time=0-12\n")
-        slurmfile.write("#SBATCH --time=2-00\n")
-        # slurmfile.write("#SBATCH -p dev\n")
-        # slurmfile.write("#SBATCH -p uninterrupted,dev\n")
-        # slurmfile.write("#SBATCH -p uninterrupted\n")
-        # slurmfile.write("#SBATCH -p dev,uninterrupted,priority\n")
-        slurmfile.write("#SBATCH -N 1\n")
-        slurmfile.write("#SBATCH --mem=64gb\n")
+increment = 1 if not double_book else 2
 
-        slurmfile.write("#SBATCH -c 4\n")
-        slurmfile.write("#SBATCH --gres=gpu:1\n")
+# def build_joint_name(a, b):
+#     import difflib
+#     matches = difflib.SequenceMatcher(None, a, b).get_matching_blocks()
+#     a_i, b_i = 0, 0
+#     for match in matches:
+#         if a_i 
 
-        # slurmfile.write("#SBATCH -c 40\n")
-        slurmfile.write("#SBATCH --constraint=pascal|turing|volta\n")
+i = 0
+while i < len(job_specs):
+    current_jobs = job_specs[i : i + increment]
 
-        slurmfile.write("cd " + true_source_dir + '\n')
-        slurmfile.write("srun " + jobcommand)
-        slurmfile.write("\n")
+    for job_spec in current_jobs: print(job_spec[1])
+    print('')
 
-    if not dry_run:
-        os.system(job_start_command + " &")
+    joint_name = ""
+    for job_spec in current_jobs: 
+        if len(joint_name) > 0: joint_name += "__"
+        joint_name += job_spec[0]
+
+    joint_name = joint_name[:200]
+
+    if local:
+        gpu_id = i % 4
+        log_path = "slurm_logs/" + job_spec[0]
+        os.system("env CUDA_VISIBLE_DEVICES={gpu_id} {command} > {log_path}.out 2> {log_path}.err &".format(
+                gpu_id=gpu_id, command=job_spec[1], log_path=log_path))
+
+    else:
+        slurm_script_path = 'slurm_scripts/' + joint_name + '.slurm'
+        slurm_script_dir = os.path.dirname(slurm_script_path)
+        os.makedirs(slurm_script_dir, exist_ok=True)
+
+        job_start_command = "sbatch " + slurm_script_path
+
+        with open(slurm_script_path, 'w') as slurmfile:
+            slurmfile.write("#!/bin/bash\n")
+            slurmfile.write("#SBATCH --job-name" + "=" + joint_name + "\n")
+            slurmfile.write("#SBATCH --open-mode=append\n")
+            slurmfile.write("#SBATCH --output=slurm_logs/" +
+                            joint_name + ".out\n")
+            slurmfile.write("#SBATCH --error=slurm_logs/" + joint_name + ".err\n")
+            slurmfile.write("#SBATCH --export=ALL\n")
+            # slurmfile.write("#SBATCH --signal=USR1@600\n")
+            # slurmfile.write("#SBATCH --time=0-02\n")
+            # slurmfile.write("#SBATCH --time=0-12\n")
+            slurmfile.write("#SBATCH --time=2-00\n")
+            # slurmfile.write("#SBATCH -p dev\n")
+            # slurmfile.write("#SBATCH -p uninterrupted,dev\n")
+            # slurmfile.write("#SBATCH -p uninterrupted\n")
+            # slurmfile.write("#SBATCH -p dev,uninterrupted,priority\n")
+            slurmfile.write("#SBATCH -N 1\n")
+            slurmfile.write("#SBATCH --mem=32gb\n")
+
+            slurmfile.write("#SBATCH -c 4\n")
+            slurmfile.write("#SBATCH --gres=gpu:1\n")
+
+            # slurmfile.write("#SBATCH -c 40\n")
+            slurmfile.write("#SBATCH --constraint=pascal|turing|volta\n")
+            # slurmfile.write("#SBATCH --exclude=lion[1-26]\n")
+
+            slurmfile.write("cd " + true_source_dir + '\n')
+
+            for job_i, job_spec in enumerate(current_jobs):
+                # srun_comm = "srun --job-name={name} --output=slurm_logs/{name}.out --error=slurm_logs/{name}.err {command} &".format(name=job_spec[0], command=job_spec[1])
+                srun_comm = "{command} &".format(name=job_spec[0], command=job_spec[1])
+                slurmfile.write(srun_comm)
+
+                # slurmfile.write("srun --job-name=" + job_spec[0] + " --output=slurm_logs/" + job_spec[0] + ".out --error=slurm_logs/" + job_spec[0] + ".err" + jobcommand)
+                slurmfile.write("\n")
+            slurmfile.write("wait\n")
+
+        if not dry_run:
+            os.system(job_start_command + " &")
+
+    i += increment

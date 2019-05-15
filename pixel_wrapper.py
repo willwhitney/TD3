@@ -2,7 +2,7 @@ import numpy as np
 from gym.core import Wrapper
 import skimage.transform
 
-INITIAL_IMG_SIZE = 256
+INITIAL_IMG_SIZE = 64
 
 class PixelObservationWrapper(Wrapper):
     def __init__(self, env, stack=4, img_width=32):
@@ -43,7 +43,8 @@ class PixelObservationWrapper(Wrapper):
     def reset(self, **kwargs):
         self.env.reset(**kwargs)
         self.imgs = [np.zeros([3, self.img_width, self.img_width]) for _ in range(self.stack - 1)] + [self.render_obs()]
-        # for _ in range(self.stack):
-        # self.step(np.zeros(self.action_space.shape))
+        for _ in range(self.stack - 1):
+            self.step(self.action_space.sample())
+        self.env._elapsed_steps = 0
         return self.observation()
 

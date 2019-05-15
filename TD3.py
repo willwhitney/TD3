@@ -5,6 +5,8 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 import utils
 
+from torch.utils.data import DataLoader
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # device = "cpu"
 
@@ -97,6 +99,21 @@ class TD3(object):
 
 
     def train(self, replay_buffer, iterations, batch_size=100, discount=0.99, tau=0.005, policy_noise=0.2, noise_clip=0.5, policy_freq=2):
+        # loader = DataLoader(replay_buffer, batch_size, shuffle=True, num_workers=0, pin_memory=True)
+        # it = 0
+        # while it < iterations:
+        #     for batch in loader:
+        #         it += 1
+        #         if it >= iterations: break
+        #         state, next_state, action, reward, done = batch
+        #         # import ipdb; ipdb.set_trace()
+                
+        #         state = state.to(device)
+        #         next_state = next_state.to(device)
+        #         action = action.to(device)
+        #         reward = reward.float().unsqueeze(1).to(device)
+        #         done = (1 - done).float().unsqueeze(1).to(device)
+
 
         for it in range(iterations):
 

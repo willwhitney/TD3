@@ -51,7 +51,7 @@ def render_policy(policy, log_dir, total_timesteps, eval_episodes=5):
             obs, reward, done, _ = env.step(action)
             frame = env.render(mode='rgb_array')
 
-            frame[:, :, 1] = (frame[:, :, 1].astype(float) + reward * 100).clip(0, 255)
+            # frame[:, :, 1] = (frame[:, :, 1].astype(float) + reward * 100).clip(0, 255)
             frames.append(frame)
 
     utils.save_gif('{}/{}.mp4'.format(log_dir, total_timesteps),
