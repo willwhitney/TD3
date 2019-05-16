@@ -561,121 +561,186 @@ code_dir = '..'
 #     },
 # ]
 
-basename = "PRF_en64_noblank"
-grids = [
-    {
-        "main_file": ['main_pixels_encode'],
-        "env_name": [
-            'ReacherTurn-v2',
-        ],
-
-        "source_env": ["PixelReacherTurn-v2"],
-        "decoder": ["64"],
-
-        # "start_timesteps": [0],
-        "max_timesteps": [5e6],
-        "eval_freq": [1e3],
-        "render_freq": [1e5],
-        "seed": [9, 10],
-    },
-    {
-        "main_file": ['main_embedded_pixels_encode'],
-        "env_name": [
-            'ReacherTurn-v2',
-        ],
-
-        "source_env": ["PixelReacherTurn-v2"],
-        "decoder": ["64"],
-
-        # "start_timesteps": [0],
-        "max_timesteps": [5e6],
-        "eval_freq": [1e3],
-        "render_freq": [1e5],
-        "seed": [9, 10],
-    },
-    {
-        "main_file": ['main_pixels_vae'],
-        "env_name": [
-            'ReacherTurn-v2',
-        ],
-
-        "source_env": ["PixelReacherTurn-v2"],
-        "decoder": ["vae64"],
-
-        # "start_timesteps": [0],
-        "max_timesteps": [5e6],
-        "eval_freq": [1e3],
-        "render_freq": [1e5],
-        "seed": [9, 10],
-    },
-
-    {
-        "main_file": ['main_pixels_encode'],
-        "env_name": [
-            'ReacherPush-v2',
-        ],
-
-        "source_env": ["PixelReacherPush-v2"],
-        "decoder": ["64"],
-
-        # "start_timesteps": [0],
-        "max_timesteps": [5e6],
-        "eval_freq": [1e3],
-        "render_freq": [1e5],
-        "seed": [9, 10],
-    },
-    {
-        "main_file": ['main_embedded_pixels_encode'],
-        "env_name": [
-            'ReacherPush-v2',
-        ],
-
-        "source_env": ["PixelReacherPush-v2"],
-        "decoder": ["64"],
-
-        # "start_timesteps": [0],
-        "max_timesteps": [5e6],
-        "eval_freq": [1e3],
-        "render_freq": [1e5],
-        "seed": [9, 10],
-    },
-
-    {
-        "main_file": ['main_pixels_vae'],
-        "env_name": [
-            'ReacherPush-v2',
-        ],
-
-        "source_env": ["PixelReacherPush-v2"],
-        "decoder": ["vae64"],
-
-        # "start_timesteps": [0],
-        "max_timesteps": [5e6],
-        "eval_freq": [1e3],
-        "render_freq": [1e5],
-        "seed": [9, 10],
-    },
-]
-
-# basename = "PRV_vae"
+# basename = "PRF_en64_noblank"
 # grids = [
-#     # raw
+#     {
+#         "main_file": ['main_pixels_encode'],
+#         "env_name": [
+#             'ReacherTurn-v2',
+#         ],
+
+#         "source_env": ["PixelReacherTurn-v2"],
+#         "decoder": ["64"],
+
+#         # "start_timesteps": [0],
+#         "max_timesteps": [5e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e5],
+#         "seed": [9, 10],
+#     },
+#     {
+#         "main_file": ['main_embedded_pixels_encode'],
+#         "env_name": [
+#             'ReacherTurn-v2',
+#         ],
+
+#         "source_env": ["PixelReacherTurn-v2"],
+#         "decoder": ["64"],
+
+#         # "start_timesteps": [0],
+#         "max_timesteps": [5e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e5],
+#         "seed": [9, 10],
+#     },
 #     {
 #         "main_file": ['main_pixels_vae'],
 #         "env_name": [
-#             'ReacherVertical-v2',
+#             'ReacherTurn-v2',
 #         ],
 
-#         "source_env": ["PixelReacherVertical-v2"],
-#         "decoder": ["vae"],
+#         "source_env": ["PixelReacherTurn-v2"],
+#         "decoder": ["vae64"],
 
 #         # "start_timesteps": [0],
-#         "max_timesteps": [1e7],
+#         "max_timesteps": [5e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e5],
+#         "seed": [9, 10],
+#     },
+
+#     {
+#         "main_file": ['main_pixels_encode'],
+#         "env_name": [
+#             'ReacherPush-v2',
+#         ],
+
+#         "source_env": ["PixelReacherPush-v2"],
+#         "decoder": ["64"],
+
+#         # "start_timesteps": [0],
+#         "max_timesteps": [5e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e5],
+#         "seed": [9, 10],
+#     },
+#     {
+#         "main_file": ['main_embedded_pixels_encode'],
+#         "env_name": [
+#             'ReacherPush-v2',
+#         ],
+
+#         "source_env": ["PixelReacherPush-v2"],
+#         "decoder": ["64"],
+
+#         # "start_timesteps": [0],
+#         "max_timesteps": [5e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e5],
+#         "seed": [9, 10],
+#     },
+
+#     {
+#         "main_file": ['main_pixels_vae'],
+#         "env_name": [
+#             'ReacherPush-v2',
+#         ],
+
+#         "source_env": ["PixelReacherPush-v2"],
+#         "decoder": ["vae64"],
+
+#         # "start_timesteps": [0],
+#         "max_timesteps": [5e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e5],
+#         "seed": [9, 10],
+#     },
+# ]
+
+# basename = "PRT_bigtip_decoder64_bigtip_vae"
+# grids = [
+#     {
+#         "main_file": ['main_pixels_encode'],
+#         "env_name": [
+#             'ReacherTurn-v2',
+#         ],
+
+#         "source_env": ["PixelReacherTurn-v2"],
+#         "decoder": ["64_bigtip"],
+
+#         # "start_timesteps": [0],
+#         "max_timesteps": [5e6],
 #         "eval_freq": [1e3],
 #         "render_freq": [1e5],
 #         "seed": list(range(8)),
 #     },
+#     {
+#         "main_file": ['main_embedded_pixels_encode'],
+#         "env_name": [
+#             'ReacherTurn-v2',
+#         ],
+
+#         "source_env": ["PixelReacherTurn-v2"],
+#         "decoder": ["64_bigtip"],
+
+#         # "start_timesteps": [0],
+#         "max_timesteps": [5e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e5],
+#         "seed": list(range(8)),
+#     },
+#     {
+#         "main_file": ['main_pixels_vae'],
+#         "env_name": [
+#             'ReacherTurn-v2',
+#         ],
+
+#         "source_env": ["PixelReacherTurn-v2"],
+#         "decoder": ["vae64_bigtip"],
+
+#         # "start_timesteps": [0],
+#         "max_timesteps": [5e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e5],
+#         "seed": list(range(8)),
+#     },
+
 # ]
+
+basename = "RV_dummy"
+grids = [
+    # {
+    #     "main_file": ['main_embedded'],
+    #     "env_name": [
+    #         'ReacherVertical-v2',
+    #     ],
+
+    #     "source_env": ["ReacherVertical-v2"],
+    #     "decoder": ["actionvae"],
+
+    #     "start_timesteps": [0],
+    #     "max_timesteps": [1e6],
+    #     "eval_freq": [1e3],
+    #     "render_freq": [1e5],
+    #     "seed": list(range(4)),
+    # },
+    {
+        "main_file": ['main_embedded'],
+        "env_name": [
+            'ReacherVertical-v2',
+        ],
+        "dummy_decoder": [True],
+        "dummy_traj_len": [4],
+        "source_env": ["ReacherVertical-v2"],
+        "no_save_models": [True],
+
+        "start_timesteps": [0],
+        "max_timesteps": [1e6],
+        "eval_freq": [1e3],
+        "render_freq": [1e5],
+        "seed": list(range(4)),
+    },
+]
 
 
 jobs = []
@@ -770,7 +835,7 @@ while i < len(job_specs):
     joint_name = joint_name[:200]
 
     if local:
-        gpu_id = i % 4
+        gpu_id = i % 1
         log_path = "slurm_logs/" + job_spec[0]
         os.system("env CUDA_VISIBLE_DEVICES={gpu_id} {command} > {log_path}.out 2> {log_path}.err &".format(
                 gpu_id=gpu_id, command=job_spec[1], log_path=log_path))

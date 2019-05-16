@@ -10,6 +10,7 @@ import skimage.transform
 
 import utils
 import TD3_pixels
+import TD3_pixels_shared
 import OurDDPG
 import DDPG
 from pixel_wrapper import PixelObservationWrapper
@@ -159,9 +160,12 @@ if __name__ == "__main__":
 
     # Initialize policy
     if args.policy_name == "TD3": 
-        policy = TD3_pixels.TD3Pixels(state_dim, action_dim, max_action, 
+        policy = TD3_pixels_shared.TD3PixelsShared(state_dim, action_dim, max_action, 
                 arch=args.arch, initialize=args.init, img_width=args.img_width, 
                 stack=args.stack, ddpglr=args.ddpglr)
+        # policy = TD3_pixels.TD3Pixels(state_dim, action_dim, max_action, 
+        #         arch=args.arch, initialize=args.init, img_width=args.img_width, 
+        #         stack=args.stack, ddpglr=args.ddpglr)
     elif args.policy_name == "OurDDPG": policy = OurDDPG.DDPG(state_dim, action_dim, max_action)
     elif args.policy_name == "DDPG": policy = DDPG.DDPG(state_dim, action_dim, max_action)
     policy.mode('eval')

@@ -153,7 +153,7 @@ if __name__ == "__main__":
         else: base_env_name = args.env_name.strip("Super").strip("Sparse")
         decoder_path = "../action-embedding/results/{}/{}/decoder.pt".format(base_env_name, args.decoder)
         print("Loading decoder from {}".format(decoder_path))
-        decoder = torch.load(decoder_path)
+        decoder = torch.load(decoder_path, map_location='cpu').cuda()
     elif args.dummy_decoder:
         decoder = DummyDecoder(action_dim, args.dummy_traj_len, env.action_space)
     decoder.max_embedding = float(decoder.max_embedding)
