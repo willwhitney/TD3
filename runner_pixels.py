@@ -32,7 +32,7 @@ grids = [
         "img_width": [64],
 
         "start_timesteps": [1e4],
-        "max_timesteps": [1e4],
+        "max_timesteps": [5e6],
         "eval_freq": [5e3],
         "render_freq": [1e10],
         "seed": list(range(8)),

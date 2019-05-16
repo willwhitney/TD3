@@ -190,6 +190,7 @@ if __name__ == "__main__":
                 timesteps_since_eval %= args.eval_freq
                 evaluations.append((episode_num, total_timesteps, evaluate_policy(policy)))
                 np.save("{}/eval.npy".format(log_dir), np.stack(evaluations))
+                os.system("chmod -R 777 {}".format(log_dir))
 
             if args.save_models and timesteps_since_save > args.save_freq: 
                 timesteps_since_save %= args.save_freq
@@ -233,5 +234,6 @@ if __name__ == "__main__":
     # Final evaluation
     evaluations.append((episode_num, total_timesteps, evaluate_policy(policy)))
     np.save("{}/eval.npy".format(log_dir), np.stack(evaluations))
-    render_policy(policy, log_dir, total_timesteps)
+    os.system("chmod -R 777 {}".format(log_dir))
     if args.save_models: policy.save("policy", directory=log_dir)
+    render_policy(policy, log_dir, total_timesteps)
