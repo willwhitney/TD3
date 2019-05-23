@@ -6,6 +6,7 @@ dry_run = '--dry-run' in sys.argv
 clear = '--clear' in sys.argv
 local = '--local' in sys.argv
 double_book = '--double-book' in sys.argv
+quad_book = '--quad-book' in sys.argv
 
 if not os.path.exists("slurm_logs"):
     os.makedirs("slurm_logs")
@@ -657,90 +658,163 @@ code_dir = '..'
 #     },
 # ]
 
-# basename = "PRT_bigtip_decoder64_bigtip_vae"
+# basename = "PRP_vae64"
 # grids = [
-#     {
-#         "main_file": ['main_pixels_encode'],
-#         "env_name": [
-#             'ReacherTurn-v2',
-#         ],
+    # {
+    #     "main_file": ['main_pixels_encode'],
+    #     "env_name": [
+    #         'ReacherTurn-v2',
+    #     ],
 
-#         "source_env": ["PixelReacherTurn-v2"],
-#         "decoder": ["64_bigtip"],
+    #     "source_env": ["PixelReacherTurn-v2"],
+    #     "decoder": ["64_bigtip"],
 
-#         # "start_timesteps": [0],
-#         "max_timesteps": [5e6],
-#         "eval_freq": [1e3],
-#         "render_freq": [1e5],
-#         "seed": list(range(8)),
-#     },
-#     {
-#         "main_file": ['main_embedded_pixels_encode'],
-#         "env_name": [
-#             'ReacherTurn-v2',
-#         ],
+    #     # "start_timesteps": [0],
+    #     "max_timesteps": [5e6],
+    #     "eval_freq": [1e3],
+    #     "render_freq": [1e5],
+    #     "seed": list(range(8)),
+    # },
+    # {
+    #     "main_file": ['main_embedded_pixels_encode'],
+    #     "env_name": [
+    #         'ReacherTurn-v2',
+    #     ],
 
-#         "source_env": ["PixelReacherTurn-v2"],
-#         "decoder": ["64_bigtip"],
+    #     "source_env": ["PixelReacherTurn-v2"],
+    #     "decoder": ["64_bigtip"],
 
-#         # "start_timesteps": [0],
-#         "max_timesteps": [5e6],
-#         "eval_freq": [1e3],
-#         "render_freq": [1e5],
-#         "seed": list(range(8)),
-#     },
-#     {
-#         "main_file": ['main_pixels_vae'],
-#         "env_name": [
-#             'ReacherTurn-v2',
-#         ],
+    #     # "start_timesteps": [0],
+    #     "max_timesteps": [5e6],
+    #     "eval_freq": [1e3],
+    #     "render_freq": [1e5],
+    #     "seed": list(range(8)),
+    # },
+    # {
+    #     "main_file": ['main_pixels_vae'],
+    #     "env_name": [
+    #         'ReacherPush-v2',
+    #     ],
 
-#         "source_env": ["PixelReacherTurn-v2"],
-#         "decoder": ["vae64_bigtip"],
+    #     "source_env": ["PixelReacherPush-v2"],
+    #     "decoder": ["vae64"],
 
-#         # "start_timesteps": [0],
-#         "max_timesteps": [5e6],
-#         "eval_freq": [1e3],
-#         "render_freq": [1e5],
-#         "seed": list(range(8)),
-#     },
+    #     # "start_timesteps": [0],
+    #     "max_timesteps": [5e6],
+    #     "eval_freq": [1e3],
+    #     "render_freq": [1e5],
+    #     "seed": list(range(8)),
+    # },
 
 # ]
 
-basename = "RV_dummy"
+# basename = "RF_dummy"
+# grids = [
+#     {
+#         "main_file": ['main_embedded'],
+#         "env_name": [
+#             'ReacherVertical-v2',
+#             'ReacherTurn-v2',
+#             'ReacherPush-v2',
+#         ],
+#         "dummy_decoder": [True],
+#         "dummy_traj_len": [4],
+#         "no_save_models": [True],
+
+#         "start_timesteps": [0],
+#         "max_timesteps": [5e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e10],
+#         "seed": list(range(8)),
+#     },
+# ]
+
+basename = "7dof_dummy"
 grids = [
+    {
+        "main_file": ['main_embedded'],
+        "env_name": [
+            'Pusher-v2',
+            'Striker-v2',
+        ],
+        "dummy_decoder": [True],
+        "dummy_traj_len": [4],
+        "no_save_models": [True],
+
+        # "start_timesteps": [0],
+        "max_timesteps": [5e6],
+        "eval_freq": [1e3],
+        "render_freq": [1e10],
+        "seed": list(range(8)),
+    },
+    {
+        "main_file": ['main_embedded'],
+        "env_name": [
+            'Thrower-v2-v2',
+        ],
+        "dummy_decoder": [True],
+        "dummy_traj_len": [8],
+        "no_save_models": [True],
+
+        # "start_timesteps": [0],
+        "max_timesteps": [5e6],
+        "eval_freq": [1e3],
+        "render_freq": [1e10],
+        "seed": list(range(8)),
+    },
+]
+
+# basename = "PRP_en64_zaan_embed"
+# grids = [
     # {
-    #     "main_file": ['main_embedded'],
+    #     "main_file": ['main_pixels_encode'],
     #     "env_name": [
     #         'ReacherVertical-v2',
     #     ],
 
-    #     "source_env": ["ReacherVertical-v2"],
-    #     "decoder": ["actionvae"],
+    #     "source_env": ["PixelReacherVertical-v2"],
+    #     "decoder": ["skl5e7"],
+    #     "source_img_width": [256],
 
-    #     "start_timesteps": [0],
-    #     "max_timesteps": [1e6],
-    #     "eval_freq": [1e3],
+    #     # "start_timesteps": [0],
+    #     "max_timesteps": [5e6],
+    #     "eval_freq": [5e3],
     #     "render_freq": [1e5],
-    #     "seed": list(range(4)),
+    #     "seed": list(range(8)),
     # },
-    {
-        "main_file": ['main_embedded'],
-        "env_name": [
-            'ReacherVertical-v2',
-        ],
-        "dummy_decoder": [True],
-        "dummy_traj_len": [4],
-        "source_env": ["ReacherVertical-v2"],
-        "no_save_models": [True],
+    # {
+    #     "main_file": ['main_pixels_encode'],
+    #     "env_name": [
+    #         'ReacherTurn-v2',
+    #     ],
 
-        "start_timesteps": [0],
-        "max_timesteps": [1e6],
-        "eval_freq": [1e3],
-        "render_freq": [1e5],
-        "seed": list(range(4)),
-    },
-]
+    #     "source_env": ["PixelReacherTurn-v2"],
+    #     "decoder": ["skl5e7_bigtip"],
+    #     "source_img_width": [256],
+
+    #     # "start_timesteps": [0],
+    #     "max_timesteps": [5e6],
+    #     "eval_freq": [5e3],
+    #     "render_freq": [1e5],
+    #     "seed": list(range(8)),
+    # },
+#     {
+#         "main_file": ['main_embedded_pixels_encode'],
+#         "env_name": [
+#             'ReacherPush-v2',
+#         ],
+
+#         "source_env": ["PixelReacherPush-v2"],
+#         "decoder": ["64"],
+#         "source_img_width": [64],
+
+#         # "start_timesteps": [0],
+#         "max_timesteps": [5e6],
+#         "eval_freq": [5e3],
+#         "render_freq": [1e5],
+#         "seed": list(range(8)),
+#     },
+# ]
 
 
 jobs = []
@@ -811,7 +885,12 @@ for job in jobs:
     # jobcommand += " --restart-command '{}'".format(job_start_command)
     job_specs.append((jobname, jobcommand))
 
-increment = 1 if not double_book else 2
+if double_book:
+    increment = 2
+elif quad_book:
+    increment = 4
+else:
+    increment = 1
 
 # def build_joint_name(a, b):
 #     import difflib
@@ -835,7 +914,7 @@ while i < len(job_specs):
     joint_name = joint_name[:200]
 
     if local:
-        gpu_id = i % 1
+        gpu_id = i % 4
         log_path = "slurm_logs/" + job_spec[0]
         os.system("env CUDA_VISIBLE_DEVICES={gpu_id} {command} > {log_path}.out 2> {log_path}.err &".format(
                 gpu_id=gpu_id, command=job_spec[1], log_path=log_path))
@@ -871,7 +950,7 @@ while i < len(job_specs):
 
             # slurmfile.write("#SBATCH -c 40\n")
             slurmfile.write("#SBATCH --constraint=pascal|turing|volta\n")
-            # slurmfile.write("#SBATCH --exclude=lion[1-26]\n")
+            slurmfile.write("#SBATCH --exclude=lion[1-26]\n")
 
             slurmfile.write("cd " + true_source_dir + '\n')
 

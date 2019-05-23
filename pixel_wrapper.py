@@ -2,22 +2,21 @@ import numpy as np
 from gym.core import Wrapper
 import skimage.transform
 
-INITIAL_IMG_SIZE = 64
-
 class PixelObservationWrapper(Wrapper):
-    def __init__(self, env, stack=4, img_width=32):
+    def __init__(self, env, stack=4, img_width=64, source_img_width=64):
         self.env = env
         self.action_space = self.env.action_space
         self.observation_space = self.env.observation_space
         self.reward_range = self.env.reward_range
         self.metadata = self.env.metadata
         self.img_width = img_width
+        self.source_img_width = source_img_width
         
         self.stack = stack
         self.imgs = [np.zeros([3, self.img_width, self.img_width]) for _ in range(self.stack)]
 
     def render_obs(self, color_last=False):
-        raw_img = self.env.render(mode='rgb_array', height=INITIAL_IMG_SIZE, width=INITIAL_IMG_SIZE)
+        raw_img = self.env.render(mode='rgb_array', height=self.source_img_width, width=self.source_img_width)
         # import ipdb; ipdb.set_trace()
         resized = skimage.transform.resize(raw_img, (self.img_width, self.img_width))
         if color_last: return resized
@@ -47,4 +46,3 @@ class PixelObservationWrapper(Wrapper):
             self.step(self.action_space.sample())
         self.env._elapsed_steps = 0
         return self.observation()
-

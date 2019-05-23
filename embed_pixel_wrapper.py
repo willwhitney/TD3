@@ -4,14 +4,13 @@ import skimage.transform
 import torch
 from gym import spaces
 
-INITIAL_IMG_SIZE = 64
-IMG_SIZE = 64
-
 class EmbedPixelObservationWrapper(Wrapper):
-    def __init__(self, env, encoder, stack=4):
+    def __init__(self, env, encoder, stack=4, img_width=64, source_img_width=64):
         self.env = env
         self.encoder = encoder
         self.stack = stack
+        self.img_width = img_width
+        self.source_img_width = source_img_width
 
         self.action_space = self.env.action_space
         self.observation_space = spaces.Box(shape=(self.stack * self.encoder.state_embed_size,), low=-np.inf, high=np.inf)
@@ -23,8 +22,8 @@ class EmbedPixelObservationWrapper(Wrapper):
 
     def render_obs(self, color_last=False):
         with torch.no_grad():
-            raw_img = self.env.render(mode='rgb_array', height=INITIAL_IMG_SIZE, width=INITIAL_IMG_SIZE)
-            resized = skimage.transform.resize(raw_img, (IMG_SIZE, IMG_SIZE))
+            raw_img = self.env.render(mode='rgb_array', height=self.source_img_width, width=self.source_img_width)
+            resized = skimage.transform.resize(raw_img, (self.img_width, self.img_width))
             resized = resized.transpose([2, 0, 1])
             embedded = self.encoder.encode_state(torch.from_numpy(resized).float().cuda().unsqueeze(0))[0]
 

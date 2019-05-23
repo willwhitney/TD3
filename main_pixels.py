@@ -92,6 +92,7 @@ if __name__ == "__main__":
     parser.add_argument("--arch", default="mine")                       # which network architecture to use (mine or one from https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail/blob/master/a2c_ppo_acktr/model.py#L176)
     parser.add_argument("--stack", default=4, type=int)                 # frames to stack together as input
     parser.add_argument("--img_width", default=64, type=int)            # size of frames
+    parser.add_argument("--source_img_width", default=64, type=int)     # size of frames before resizing
     parser.add_argument("--lr_schedule", action="store_true")           # use a learning rate schedule
     parser.add_argument("--replay_type", default="disk")                # which replay implementation to use
 
@@ -134,7 +135,7 @@ if __name__ == "__main__":
     # add a Monitor and log the command-line options
     log_dir = "results/{}/".format(args.name)
     os.makedirs(log_dir, exist_ok=True)
-    env = PixelObservationWrapper(env, stack=args.stack, img_width=args.img_width)
+    env = PixelObservationWrapper(env, stack=args.stack, img_width=args.img_width, source_img_width=args.source_img_width)
     # env = bench.Monitor(env, log_dir, allow_early_resets=True)
     utils.write_options(args, log_dir)
 

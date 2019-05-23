@@ -87,6 +87,7 @@ if __name__ == "__main__":
     parser.add_argument("--replay_size", default=1e6, type=int)         # Size of replay buffer
     parser.add_argument("--render_freq", default=5e3, type=float)       # How often (time steps) we render
     parser.add_argument("--stack", default=4, type=int)                 # frames to stack together as input
+    parser.add_argument("--source_img_width", default=64, type=int)     # size of frames before resizing
 
     args = parser.parse_args()
     args.save_models = not args.no_save_models
@@ -132,7 +133,7 @@ if __name__ == "__main__":
     print("Loading model from {}".format(model_path))
     model = torch.load(model_path).cuda().eval()
 
-    env = EmbedPixelObservationWrapper(env, model, stack=args.stack)
+    env = EmbedPixelObservationWrapper(env, model, stack=args.stack, source_img_width=args.source_img_width)
 
     # env = bench.Monitor(env, log_dir, allow_early_resets=True)
     utils.write_options(args, log_dir)
