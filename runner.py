@@ -729,40 +729,40 @@ code_dir = '..'
 #     },
 # ]
 
-basename = "7dof_dummy"
-grids = [
-    {
-        "main_file": ['main_embedded'],
-        "env_name": [
-            'Pusher-v2',
-            'Striker-v2',
-        ],
-        "dummy_decoder": [True],
-        "dummy_traj_len": [4],
-        "no_save_models": [True],
+# basename = "7dof_dummy"
+# grids = [
+#     {
+#         "main_file": ['main_embedded'],
+#         "env_name": [
+#             'Pusher-v2',
+#             'Striker-v2',
+#         ],
+#         "dummy_decoder": [True],
+#         "dummy_traj_len": [4],
+#         "no_save_models": [True],
 
-        # "start_timesteps": [0],
-        "max_timesteps": [5e6],
-        "eval_freq": [1e3],
-        "render_freq": [1e10],
-        "seed": list(range(8)),
-    },
-    {
-        "main_file": ['main_embedded'],
-        "env_name": [
-            'Thrower-v2-v2',
-        ],
-        "dummy_decoder": [True],
-        "dummy_traj_len": [8],
-        "no_save_models": [True],
+#         # "start_timesteps": [0],
+#         "max_timesteps": [5e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e10],
+#         "seed": list(range(8)),
+#     },
+#     {
+#         "main_file": ['main_embedded'],
+#         "env_name": [
+#             'Thrower-v2-v2',
+#         ],
+#         "dummy_decoder": [True],
+#         "dummy_traj_len": [8],
+#         "no_save_models": [True],
 
-        # "start_timesteps": [0],
-        "max_timesteps": [5e6],
-        "eval_freq": [1e3],
-        "render_freq": [1e10],
-        "seed": list(range(8)),
-    },
-]
+#         # "start_timesteps": [0],
+#         "max_timesteps": [5e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e10],
+#         "seed": list(range(8)),
+#     },
+# ]
 
 # basename = "PRP_en64_zaan_embed"
 # grids = [
@@ -815,6 +815,57 @@ grids = [
 #         "seed": list(range(8)),
 #     },
 # ]
+
+# basename = "pixel_darla"
+# grids = [
+#     {
+#         "main_file": ['main_pixels_encode'],
+#         "env_name": [
+#             'ReacherTurn-v2',
+#         ],
+
+#         "source_env": ["PixelReacherTurn-v2"],
+#         "decoder": ["64_bigtip"],
+
+#         # "start_timesteps": [0],
+#         "max_timesteps": [5e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e5],
+#         "seed": list(range(8)),
+#     },
+#     {
+#         "main_file": ['main_embedded_pixels_encode'],
+#         "env_name": [
+#             'ReacherTurn-v2',
+#         ],
+
+#         "source_env": ["PixelReacherTurn-v2"],
+#         "decoder": ["64_bigtip"],
+
+#         # "start_timesteps": [0],
+#         "max_timesteps": [5e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e5],
+#         "seed": list(range(8)),
+#     },
+#     {
+#         "main_file": ['main_pixels_vae'],
+#         "env_name": [
+#             'ReacherPush-v2',
+#         ],
+
+#         "source_env": ["PixelReacherPush-v2"],
+#         "decoder": ["vae64"],
+
+#         # "start_timesteps": [0],
+#         "max_timesteps": [5e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e5],
+#         "seed": list(range(8)),
+#     },
+
+# ]
+
 
 
 jobs = []

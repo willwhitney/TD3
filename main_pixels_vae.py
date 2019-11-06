@@ -129,7 +129,7 @@ if __name__ == "__main__":
     # add a Monitor and log the command-line options
     log_dir = "results/{}/".format(args.name)
     os.makedirs(log_dir, exist_ok=True)
-    model_path = "../action-embedding/results/{}/{}/model_100.pt".format(args.source_env, args.decoder)
+    model_path = "../action-embedding/results/{}/{}/model_200.pt".format(args.source_env, args.decoder)
     print("Loading model from {}".format(model_path))
     model = torch.load(model_path).cuda().eval()
 
