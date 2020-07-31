@@ -5,6 +5,7 @@ import argparse
 import os
 from baselines import bench
 import sys
+import skimage.transform
 
 import utils
 import TD3
@@ -44,14 +45,15 @@ def render_policy(policy, log_dir, total_timesteps, eval_episodes=5):
     for episode in range(eval_episodes):
         obs = env.reset()
         policy.reset()
-        frames.append(env.render(mode='rgb_array'))
+        frame = env.render(mode='rgb_array')
+        frame = skimage.transform.resize(frame, (128, 128))
+        frames.append(frame)
         done = False
         while not done:
             action = policy.select_action(np.array(obs))
             obs, reward, done, _ = env.step(action)
             frame = env.render(mode='rgb_array')
-
-            # frame[:, :, 1] = (frame[:, :, 1].astype(float) + reward * 100).clip(0, 255)
+            frame = skimage.transform.resize(frame, (128, 128))
             frames.append(frame)
 
     utils.save_gif('{}/{}.mp4'.format(log_dir, total_timesteps),

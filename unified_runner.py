@@ -67,100 +67,6 @@ excluded_flags = {'main_file'}
 #     },
 # ]
 
-# basename = "PRF_embed200_newskimage"
-# embed_grid = [
-#     # only make one job in each grid — 
-#     #   not sure if aligning the RL jobs with these will work otherwise
-#     {
-#         'main_file': ['main_pixels'],
-#         'epochs': [200],
-#         'embed-every': [200],
-
-#         'env': ['ReacherVertical-v2'],
-
-#         'model-type': ['variational'],
-#         'state-kl': [5e-7],
-#         'state-embed-size': [200],
-#     },
-#     {
-#         'main_file': ['main_pixels'],
-#         'epochs': [200],
-#         'embed-every': [200],
-
-#         'env': ['ReacherTurn-v2'],
-
-#         'model-type': ['variational'],
-#         'state-kl': [5e-7],
-#         'state-embed-size': [200],
-#     },
-#     {
-#         'main_file': ['main_pixels'],
-#         'epochs': [200],
-#         'embed-every': [200],
-
-#         'env': ['ReacherPush-v2'],
-
-#         'model-type': ['variational'],
-#         'state-kl': [5e-7],
-#         'state-embed-size': [200],
-#     },
-# ]
-
-# rl_grid = [
-#     {
-#         "main_file": ['main_embedded_pixels_encode'],
-#         "env_name": [
-#             'ReacherVertical-v2',
-#             # 'ReacherTurn-v2',
-#             # 'ReacherPush-v2',
-#         ],
-
-#         "_embed_job": [0],
-#         "source_env": ['PixelReacherVertical-v2'],
-#         "source_img_width": [64],
-
-#         "max_timesteps": [5e6],
-#         "eval_freq": [5e3],
-#         "render_freq": [1e5],
-#         "seed": list(range(8)),
-#     },
-#     {
-#         "main_file": ['main_embedded_pixels_encode'],
-#         "env_name": [
-#             # 'ReacherVertical-v2',
-#             'ReacherTurn-v2',
-#             # 'ReacherPush-v2',
-#         ],
-
-#         "_embed_job": [1],
-#         "source_env": ['PixelReacherTurn-v2'],
-#         "source_img_width": [64],
-
-#         "max_timesteps": [5e6],
-#         "eval_freq": [5e3],
-#         "render_freq": [1e5],
-#         "seed": list(range(8)),
-#     },
-#     {
-#         "main_file": ['main_embedded_pixels_encode'],
-#         "env_name": [
-#             # 'ReacherVertical-v2',
-#             # 'ReacherPush-v2',
-#             'ReacherPush-v2',
-#         ],
-
-#         "_embed_job": [2],
-#         "source_env": ['PixelReacherPush-v2'],
-#         "source_img_width": [64],
-
-#         "max_timesteps": [5e6],
-#         "eval_freq": [5e3],
-#         "render_freq": [1e5],
-#         "seed": list(range(8)),
-#     },
-# ]
-
-
 # embed_grid = [
 #     # only make one job in each grid — 
 #     #   not sure if aligning the RL jobs with these will work otherwise
@@ -218,7 +124,69 @@ excluded_flags = {'main_file'}
 # ]
 
 
-# basename = "P7DoF"
+
+# basename = "state_pixel_deterministic"
+# embed_grid = [
+#     # only make one job in each grid — 
+#     #   not sure if aligning the RL jobs with these will work otherwise
+# ]
+
+# rl_grid = [
+#     {
+#         "main_file": ['main_pixels_encode'],
+#         "env_name": [
+#             'ReacherVertical-v2',
+#             # 'ReacherTurn-v2',
+#             # 'ReacherPush-v2',
+#         ],
+
+#         "decoder": ["detpred"],
+#         "source_env": ['PixelReacherVertical-v2'],
+#         "source_img_width": [64],
+
+#         "max_timesteps": [5e6],
+#         "eval_freq": [5e3],
+#         "render_freq": [1e5],
+#         "seed": list(range(8)),
+#     },
+#     {
+#         "main_file": ['main_pixels_encode'],
+#         "env_name": [
+#             # 'ReacherVertical-v2',
+#             'ReacherTurn-v2',
+#             # 'ReacherPush-v2',
+#         ],
+
+#         "decoder": ["embed_pixel_deterministic_rf_envReacherTurn-v2"],
+#         "source_env": ['PixelReacherTurn-v2'],
+#         "source_img_width": [64],
+
+#         "max_timesteps": [5e6],
+#         "eval_freq": [5e3],
+#         "render_freq": [1e5],
+#         "seed": list(range(8)),
+#     },
+#     {
+#         "main_file": ['main_pixels_encode'],
+#         "env_name": [
+#             # 'ReacherVertical-v2',
+#             # 'ReacherTurn-v2',
+#             'ReacherPush-v2',
+#         ],
+
+#         "decoder": ["embed_pixel_deterministic_rf_envReacherPush-v2"],
+#         "source_env": ['PixelReacherPush-v2'],
+#         "source_img_width": [64],
+
+#         "max_timesteps": [5e6],
+#         "eval_freq": [5e3],
+#         "render_freq": [1e5],
+#         "seed": list(range(8)),
+#     },
+# ]
+
+
+# basename = "gym_sweep_fixedasize"
 # embed_grid = [
 #     # only make one job in each grid — 
 #     #   not sure if aligning the RL jobs with these will work otherwise
@@ -227,220 +195,420 @@ excluded_flags = {'main_file'}
 #         'epochs': [200],
 #         'embed-every': [200],
 
-#         'env': ['Pusher-v2'],
+#         'env': ['Hopper-v2'],
+#         'action-embed-size': [3],
 
 #         'model-type': ['variational'],
 #         'state-kl': [5e-7],
-#         'action-kl': [5e-7],
-#         'action-embed-size': [7],
+#         'state-embed-size': [100],
 #     },
 #     {
 #         'main_file': ['main_pixels'],
 #         'epochs': [200],
 #         'embed-every': [200],
 
-#         'env': ['Striker-v2'],
+#         'env': ['Swimmer-v2'],
+#         'action-embed-size': [2],
 
 #         'model-type': ['variational'],
 #         'state-kl': [5e-7],
-#         'action-kl': [5e-7],
-#         'action-embed-size': [7],
+#         'state-embed-size': [100],
 #     },
 #     {
 #         'main_file': ['main_pixels'],
 #         'epochs': [200],
 #         'embed-every': [200],
 
-#         'env': ['Thrower-v2'],
+#         'env': ['Walker2d-v2'],
+#         'action-embed-size': [6],
 
 #         'model-type': ['variational'],
 #         'state-kl': [5e-7],
-#         'action-kl': [5e-7],
-#         'action-embed-size': [7],
+#         'state-embed-size': [100],
+#     },
+# ]
+
+# rl_grid = [
+#     {
+#         "main_file": ['main_embedded_pixels_encode'],
+#         "env_name": [
+#             'Hopper-v2',
+#         ],
+
+#         "_embed_job": [0],
+#         "source_env": ['PixelHopper-v2'],
+#         "source_img_width": [64],
+
+#         "max_timesteps": [5e6],
+#         "eval_freq": [5e3],
+#         "render_freq": [1e5],
+#         "seed": list(range(8)),
+#     },
+#     {
+#         "main_file": ['main_embedded_pixels_encode'],
+#         "env_name": [
+#             'Swimmer-v2',
+#         ],
+
+#         "_embed_job": [1],
+#         "source_env": ['PixelSwimmer-v2'],
+#         "source_img_width": [64],
+
+#         "max_timesteps": [5e6],
+#         "eval_freq": [5e3],
+#         "render_freq": [1e5],
+#         "seed": list(range(8)),
+#     },
+#     {
+#         "main_file": ['main_embedded_pixels_encode'],
+#         "env_name": [
+#             'Walker2d-v2',
+#         ],
+
+#         "_embed_job": [2],
+#         "source_env": ['PixelWalker2d-v2'],
+#         "source_img_width": [64],
+
+#         "max_timesteps": [5e6],
+#         "eval_freq": [5e3],
+#         "render_freq": [1e5],
+#         "seed": list(range(8)),
+#     },
+# ]
+
+
+# basename = "RP_ksweep_seed2"
+# embed_grid = [
+#     # only make one job in each grid — 
+#     #   not sure if aligning the RL jobs with these will work otherwise
+#     {
+#         'main_file': ['main'],
+#         'seed': [2],
+#         'epochs': [200],
+#         'embed-every': [10000],
+#         'qpos-qvel': [True],
+#         'traj-len': [2],
+
+#         'env': ['ReacherPush-v2'],
+#     },
+#     {
+#         'main_file': ['main'],
+#         'seed': [2],
+#         'epochs': [200],
+#         'embed-every': [10000],
+#         'qpos-qvel': [True],
+#         'traj-len': [4],
+
+#         'env': ['ReacherPush-v2'],
+#     },
+#     {
+#         'main_file': ['main'],
+#         'seed': [2],
+#         'epochs': [200],
+#         'embed-every': [10000],
+#         'qpos-qvel': [True],
+#         'traj-len': [6],
+
+#         'env': ['ReacherPush-v2'],
+#     },
+#     {
+#         'main_file': ['main'],
+#         'seed': [2],
+#         'epochs': [200],
+#         'embed-every': [10000],
+#         'qpos-qvel': [True],
 #         'traj-len': [8],
+
+#         'env': ['ReacherPush-v2'],
+#     },
+#     {
+#         'main_file': ['main'],
+#         'seed': [2],
+#         'epochs': [200],
+#         'embed-every': [10000],
+#         'qpos-qvel': [True],
+#         'traj-len': [10],
+
+#         'env': ['ReacherPush-v2'],
 #     },
 # ]
 
 # rl_grid = [
 #     {
-#         "main_file": ['main_embedded_pixels_encode'],
+#         "main_file": ['main_embedded'],
 #         "env_name": [
-#             'Pusher-v2',
+#             'ReacherPush-v2',
 #         ],
 
 #         "_embed_job": [0],
-#         "source_env": ['PixelPusher-v2'],
-#         "source_img_width": [64],
+#         "source_env": ['ReacherPush-v2'],
 
-#         "max_timesteps": [5e6],
-#         "eval_freq": [5e3],
-#         "render_freq": [1e5],
+#         "start_timesteps": [0],
+#         "max_timesteps": [1e6],
+#         "eval_freq": [1e2],
+#         "render_freq": [1e4],
 #         "seed": list(range(4)),
 #     },
 #     {
-#         "main_file": ['main_embedded_pixels_encode'],
+#         "main_file": ['main_embedded'],
 #         "env_name": [
-#             'Striker-v2',
+#             'ReacherPush-v2',
 #         ],
 
 #         "_embed_job": [1],
-#         "source_env": ['PixelStriker-v2'],
-#         "source_img_width": [64],
+#         "source_env": ['ReacherPush-v2'],
 
-#         "max_timesteps": [5e6],
-#         "eval_freq": [5e3],
-#         "render_freq": [1e5],
+#         "start_timesteps": [0],
+#         "max_timesteps": [1e6],
+#         "eval_freq": [1e2],
+#         "render_freq": [1e4],
 #         "seed": list(range(4)),
 #     },
 #     {
-#         "main_file": ['main_embedded_pixels_encode'],
+#         "main_file": ['main_embedded'],
 #         "env_name": [
-#             'Thrower-v2',
+#             'ReacherPush-v2',
 #         ],
 
 #         "_embed_job": [2],
-#         "source_env": ['PixelThrower-v2'],
-#         "source_img_width": [64],
+#         "source_env": ['ReacherPush-v2'],
 
-#         "max_timesteps": [5e6],
-#         "eval_freq": [5e3],
-#         "render_freq": [1e5],
+#         "start_timesteps": [0],
+#         "max_timesteps": [1e6],
+#         "eval_freq": [1e2],
+#         "render_freq": [1e4],
+#         "seed": list(range(4)),
+#     },
+#     {
+#         "main_file": ['main_embedded'],
+#         "env_name": [
+#             'ReacherPush-v2',
+#         ],
+
+#         "_embed_job": [3],
+#         "source_env": ['ReacherPush-v2'],
+
+#         "start_timesteps": [0],
+#         "max_timesteps": [1e6],
+#         "eval_freq": [1e2],
+#         "render_freq": [1e4],
+#         "seed": list(range(4)),
+#     },
+#     {
+#         "main_file": ['main_embedded'],
+#         "env_name": [
+#             'ReacherPush-v2',
+#         ],
+
+#         "_embed_job": [4],
+#         "source_env": ['ReacherPush-v2'],
+
+#         "start_timesteps": [0],
+#         "max_timesteps": [1e6],
+#         "eval_freq": [1e2],
+#         "render_freq": [1e4],
 #         "seed": list(range(4)),
 #     },
 # ]
 
-# basename = "P7DoF_darla"
+# basename = "states_gym_sweep"
+# embed_grid = [
+#     # only make one job in each grid — 
+#     #   not sure if aligning the RL jobs with these will work otherwise
+#     # {
+#     #     'main_file': ['main'],
+#     #     'epochs': [200],
+#     #     'embed-every': [10000],
+
+#     #     'env': ['Hopper-v2'],
+#     #     'embed-size': [3],
+#     #     'qpos-qvel': [True],
+#     # },
+#     # {
+#     #     'main_file': ['main'],
+#     #     'epochs': [200],
+#     #     'embed-every': [10000],
+
+#     #     'env': ['Swimmer-v2'],
+#     #     'embed-size': [2],
+#     #     'qpos-qvel': [True],
+#     # },
+#     # {
+#     #     'main_file': ['main'],
+#     #     'epochs': [200],
+#     #     'embed-every': [10000],
+
+#     #     'env': ['Walker2d-v2'],
+#     #     'embed-size': [6],
+#     #     'qpos-qvel': [True],
+#     # },
+#     # {
+#     #     'main_file': ['main'],
+#     #     'epochs': [200],
+#     #     'embed-every': [10000],
+
+#     #     'env': ['HalfCheetah-v2'],
+#     #     'embed-size': [6],
+#     #     'qpos-qvel': [True],
+#     # },
+#     # {
+#     #     'main_file': ['main'],
+#     #     'epochs': [200],
+#     #     'embed-every': [10000],
+
+#     #     'env': ['Ant-v2'],
+#     #     'embed-size': [8],
+#     #     'qpos-qvel': [True],
+#     # },
+    
+# ]
+
+# rl_grid = [
+#     # {
+#     #     "main_file": ['main_embedded'],
+#     #     "env_name": ['Hopper-v2',],
+
+#     #     "_embed_job": [0],
+#     #     "source_env": ['Hopper-v2'],
+
+#     #     "start_timesteps": [0],
+#     #     "max_timesteps": [1e6],
+#     #     "eval_freq": [1e3],
+#     #     "render_freq": [1e5],
+#     #     "seed": list(range(2)),
+#     # },
+#     {
+#         "main_file": ['main_embedded'],
+#         "env_name": ['Swimmer-v2',],
+
+#         # "_embed_job": [1],
+#         "decoder": ["embed_states_gym_sweep_envSwimmer-v2_embed-size2"],
+#         "source_env": ['Swimmer-v2'],
+
+#         "start_timesteps": [0],
+#         "max_timesteps": [1e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e5],
+#         "seed": list(range(2)),
+#     },
+#     # {
+#     #     "main_file": ['main_embedded'],
+#     #     "env_name": ['Walker2d-v2',],
+
+#     #     "_embed_job": [2],
+#     #     "source_env": ['Walker2d-v2'],
+
+#     #     "start_timesteps": [0],
+#     #     "max_timesteps": [1e6],
+#     #     "eval_freq": [1e3],
+#     #     "render_freq": [1e5],
+#     #     "seed": list(range(2)),
+#     # },
+#     {
+#         "main_file": ['main_embedded'],
+#         "env_name": ['HalfCheetah-v2', ],
+
+#         # "_embed_job": [2],
+#         "decoder": ["embed_states_gym_sweep_envHalfCheetah-v2_embed-size6"],
+#         "source_env": ['HalfCheetah-v2'],
+
+#         "start_timesteps": [0],
+#         "max_timesteps": [1e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e5],
+#         "seed": list(range(2)),
+#     },
+#     {
+#         "main_file": ['main_embedded'],
+#         "env_name": ['Ant-v2', ],
+
+#         # "_embed_job": [2],
+#         "decoder": ["embed_states_gym_sweep_envAnt-v2_embed-size8"],
+#         "source_env": ['Ant-v2'],
+
+#         "start_timesteps": [0],
+#         "max_timesteps": [1e6],
+#         "eval_freq": [1e3],
+#         "render_freq": [1e5],
+#         "seed": list(range(2)),
+#     },
+# ]
+
+
+# basename = "RT_ksweep"
 # embed_grid = [
 #     # only make one job in each grid — 
 #     #   not sure if aligning the RL jobs with these will work otherwise
 #     {
-#         "main_file": ['main_darla'],
-#         "env": ['Pusher-v2'],
-#         "epochs": [200],
-#         "embed-every": [200000],
-#     },
-#     {
-#         "main_file": ['main_darla'],
-#         "env": ['Striker-v2'],
-#         "epochs": [200],
-#         "embed-every": [200000],
-#     },
-#     {
-#         "main_file": ['main_darla'],
-#         "env": ['Thrower-v2'],
-#         "epochs": [200],
-#         "embed-every": [200000],
-#     },
+#         'main_file': ['main'],
+#         'seed': list(range(4)),
+#         'epochs': [200],
+#         'embed-every': [10000],
+#         'qpos-qvel': [True],
+#         'traj-len': [1, 2, 4, 6, 8, 10],
+
+#         'env': ['ReacherTurn-v2'],
+#     },    
 # ]
 
 # rl_grid = [
 #     {
-#         "main_file": ['main_pixels_vae'],
+#         "main_file": ['main_embedded'],
 #         "env_name": [
-#             'Pusher-v2',
+#             'ReacherTurn-v2',
 #         ],
 
-#         "_embed_job": [0],
-#         "source_env": ['PixelPusher-v2'],
-#         "source_img_width": [64],
+#         # "decoder": ["embed_{}_seed{}_traj-len{}".format(basename, s, k)
+#         #             # for s in range(4) for k in [1, 2, 4, 6, 8, 10]],
+#         #             for s in range(4) for k in [15, 20, 30]],
+#         "_embed_job": list(range(24)),
+#         "source_env": ['ReacherTurn-v2'],
 
-#         "max_timesteps": [5e6],
-#         "eval_freq": [5e3],
-#         "render_freq": [1e5],
-#         "seed": list(range(4)),
-#     },
-#     {
-#         "main_file": ['main_pixels_vae'],
-#         "env_name": [
-#             'Striker-v2',
-#         ],
-
-#         "_embed_job": [1],
-#         "source_env": ['PixelStriker-v2'],
-#         "source_img_width": [64],
-
-#         "max_timesteps": [5e6],
-#         "eval_freq": [5e3],
-#         "render_freq": [1e5],
-#         "seed": list(range(4)),
-#     },
-#     {
-#         "main_file": ['main_pixels_vae'],
-#         "env_name": [
-#             'Thrower-v2',
-#         ],
-
-#         "_embed_job": [2],
-#         "source_env": ['PixelThrower-v2'],
-#         "source_img_width": [64],
-
-#         "max_timesteps": [5e6],
-#         "eval_freq": [5e3],
-#         "render_freq": [1e5],
-#         "seed": list(range(4)),
+#         "start_timesteps": [0],
+#         "max_timesteps": [1e6],
+#         "eval_freq": [1e2],
+#         "render_freq": [1e4],
+#         "seed": list(range(1)),
 #     },
 # ]
 
-basename = "state_pixel_deterministic"
+basename = "7DPusher_ksweep"
 embed_grid = [
     # only make one job in each grid — 
     #   not sure if aligning the RL jobs with these will work otherwise
+    {
+        'main_file': ['main'],
+        'seed': list(range(4)),
+        'epochs': [200],
+        'embed-every': [10000],
+        'qpos-qvel': [True],
+        'traj-len': [1, 2, 4, 6, 8, 10],
+        'embed-size': [7],
+
+        'env': ['Pusher-v2'],
+    },
 ]
 
 rl_grid = [
     {
-        "main_file": ['main_pixels_encode'],
+        "main_file": ['main_embedded'],
         "env_name": [
-            'ReacherVertical-v2',
-            # 'ReacherTurn-v2',
-            # 'ReacherPush-v2',
+            'Pusher-v2',
         ],
 
-        "decoder": ["detpred"],
-        "source_env": ['PixelReacherVertical-v2'],
-        "source_img_width": [64],
+        # "decoder": ["embed_{}_seed{}_traj-len{}".format(basename, s, k)
+        #             # for s in range(4) for k in [1, 2, 4, 6, 8, 10]],
+        #             for s in range(4) for k in [15, 20, 30]],
+        "_embed_job": list(range(24)),
+        "source_env": ['Pusher-v2'],
 
-        "max_timesteps": [5e6],
-        "eval_freq": [5e3],
+        "start_timesteps": [0],
+        "max_timesteps": [2e6],
+        "eval_freq": [1e4],
         "render_freq": [1e5],
-        "seed": list(range(8)),
-    },
-    {
-        "main_file": ['main_pixels_encode'],
-        "env_name": [
-            # 'ReacherVertical-v2',
-            'ReacherTurn-v2',
-            # 'ReacherPush-v2',
-        ],
-
-        "decoder": ["embed_pixel_deterministic_rf_envReacherTurn-v2"],
-        "source_env": ['PixelReacherTurn-v2'],
-        "source_img_width": [64],
-
-        "max_timesteps": [5e6],
-        "eval_freq": [5e3],
-        "render_freq": [1e5],
-        "seed": list(range(8)),
-    },
-    {
-        "main_file": ['main_pixels_encode'],
-        "env_name": [
-            # 'ReacherVertical-v2',
-            # 'ReacherTurn-v2',
-            'ReacherPush-v2',
-        ],
-
-        "decoder": ["embed_pixel_deterministic_rf_envReacherPush-v2"],
-        "source_env": ['PixelReacherPush-v2'],
-        "source_img_width": [64],
-
-        "max_timesteps": [5e6],
-        "eval_freq": [5e3],
-        "render_freq": [1e5],
-        "seed": list(range(8)),
+        "seed": list(range(1)),
     },
 ]
-
 
 
 def construct_varying_keys(grids):
@@ -543,7 +711,8 @@ for i, job in enumerate(embed_jobs):
             slurmfile.write("#SBATCH --export=ALL\n")
             slurmfile.write("#SBATCH --time=1-00\n")
             slurmfile.write("#SBATCH -N 1\n")
-            slurmfile.write("#SBATCH --mem=128gb\n")
+            # slurmfile.write("#SBATCH --mem=128gb\n")
+            slurmfile.write("#SBATCH --mem=32gb\n")
 
             slurmfile.write("#SBATCH -c 4\n")
             slurmfile.write("#SBATCH --gres=gpu:1\n")
